@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for user roles
+enum Role {
+  USER
+  ADMIN
+}
+
+// Enum for subscription plans
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PREMIUM
+  ENTERPRISE
+}
+
+// Enum for subscription status
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  CANCELED
+  EXPIRED
+}
+
+// Enum for payment methods
+enum PaymentMethod {
+  CASH
+  STRIPE
+  PAYPAL
+}
+
+// Enum for media types
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+// Enum for token types
+enum TokenType {
+  VERIFICATION
+  PASSWORD_RESET
+  LOGIN
+}
+
+// User model
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  username          String         @unique
+  password          String
+  phoneNumber       String?
+  gender            String?
+  profilePicture    String?
+  isVerified        Boolean        @default(false)
+  isApproved        Boolean        @default(false)
+  role              Role           @default(USER)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  tokens            Token[]
+  subscriptions     Subscription[]
+  galleryItems      GalleryItem[]
+}
+
+// Token model for verification, password reset, and login
+model Token {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  type      TokenType
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Subscription model
+model Subscription {
+  id            String             @id @default(uuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan          SubscriptionPlan
+  status        SubscriptionStatus @default(PENDING)
+  paymentMethod PaymentMethod
+  startDate     DateTime?
+  endDate       DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  paymentId     String?            // For payment reference from external services
+
+  @@index([userId])
+}
+
+// Gallery Item model
+model GalleryItem {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  fileUrl     String
+  mediaType   MediaType
+  isFavorite  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+}
