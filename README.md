@@ -1,102 +1,125 @@
-````md
-# Next.js + Prisma Project
+# SnapTrace: Photo Management App
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app) and set up to use [Prisma](https://www.prisma.io/) as the ORM for database management.
+SnapTrace is a modern web application for storing, organizing, and sharing photos and videos with advanced features and security.
+
+## Features
+
+- **User Authentication**: Secure signup, login, and email verification
+- **Admin Dashboard**: Manage users, subscriptions, and platform settings
+- **Gallery Management**: Upload, organize, and share photos and videos
+- **Advanced Search**: Find content by tags, dates, or other metadata
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
+
+## Data Fetching Strategies
+
+This project demonstrates various Next.js data fetching strategies:
+
+1. **Static Site Generation (SSG)** with Incremental Static Regeneration (ISR) for:
+   - Authentication pages (signup, login, forgot-password)
+   - Blog index and home page
+   - Public pages that don't need frequent updates
+
+2. **Server-Side Rendering (SSR)** for:
+   - Admin dashboard with real-time database queries
+   - User profile pages with authenticated user-specific data
+
+3. **Dynamic Routes with getStaticPaths** for:
+   - Blog posts ([slug].tsx) with fallback: false
+   - Tag pages ([tag].tsx) with fallback: true for on-demand generation
+
+4. **Client-Side Data Fetching with SWR** in:
+   - Explore page with pagination and filtering
+   - Dashboard components with real-time updates
 
 ## Getting Started
 
-### 1. Install Dependencies
+### Prerequisites
 
-Install all project dependencies:
+- Node.js (>= 16.x)
+- MySQL database or compatible alternative
+- npm or yarn
 
-```bash
-npm install
-# or
-yarn
-# or
-pnpm install
-# or
-bun install
-````
+### Installation
 
-### 2. Run the Development Server
+1. Clone the repository
+   ```bash
+   git clone https://github.com/yourusername/snaptrace.git
+   cd snaptrace
+   ```
 
-Start the development server:
+2. Install dependencies
+   ```bash
+   npm install
+   # or 
+   yarn
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+3. Create a `.env` file in the root directory with the following variables:
+   ```
+   DATABASE_URL="mysql://user:password@localhost:3306/snaptrace"
+   JWT_SECRET="your-jwt-secret-key"
+   NEXTAUTH_URL="http://localhost:3000"
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
+4. Set up the database
+   ```bash
+   npx prisma db push
+   ```
 
-You can start editing the application by modifying the file at `pages/index.tsx`. The page auto-updates as you edit the file.
+5. Create admin user(s)
+   ```bash
+   npm run seed:admin
+   # or directly with
+   npx ts-node scripts/seed-admin.ts
+   ```
 
-## Database Setup with Prisma
+6. Start the development server
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-This project uses [Prisma](https://www.prisma.io/) for database access. Follow these steps to set up your database.
+7. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-### 1. Define Your Data Model
+### Admin Login Credentials
 
-Edit your data model in the `prisma/schema.prisma` file.
+After running the admin seed script successfully, you can log in with:
 
-### 2. Push the Schema to the Database
+- Email: `admin@snaptrace.com`
+- Password: `Admin@123`
 
-Run the following command to apply the schema to your database:
+Or:
 
-```bash
-npx prisma db push
-```
+- Email: `superadmin@snaptrace.com`
+- Password: `SuperAdmin@123`
 
-### 3. Generate Prisma Client
+## Authentication Flow
 
-After pushing the schema, generate the Prisma client:
+1. User signs up with email, username, and password
+2. Verification email is sent to the user
+3. User verifies email by entering the verification code
+4. Admin approves the user account
+5. User can log in after approval
+6. Two-step login process requires an email verification code
 
-```bash
-npx prisma generate
-```
+## Role-Based Access
 
-Your Prisma client will now be available in your project for querying the database.
+- **User Role**: Regular users can access their profile, gallery, and subscription features
+- **Admin Role**: Administrators can access the admin dashboard, approve users, and manage platform features
 
-## API Routes
+## Project Structure
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed at:
+- `/app`: Application components, hooks, and utilities
+- `/pages`: Page components and API routes
+- `/prisma`: Database schema and migration files
+- `/public`: Static assets
+- `/styles`: Global styles and theme settings
+- `/scripts`: Utility scripts for setup and maintenance
 
-```
-http://localhost:3000/
-```
+## License
 
-This endpoint is defined in `pages/index.tsx`.
-
-Files in the `pages/api` directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) and not as React pages.
-
-## Font Optimization
-
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a modern font family by Vercel.
-
-## Learn More
-
-To learn more about Next.js and Prisma:
-
-* [Next.js Documentation](https://nextjs.org/docs)
-* [Learn Next.js](https://nextjs.org/learn-pages-router)
-* [Prisma Documentation](https://www.prisma.io/docs)
-
-You can also check out:
-
-* [Next.js GitHub Repository](https://github.com/vercel/next.js)
-* [Prisma GitHub Repository](https://github.com/prisma/prisma)
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is with the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
-
-For more information, see the [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying).
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ```
 ```

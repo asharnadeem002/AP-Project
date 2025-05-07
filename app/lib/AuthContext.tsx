@@ -50,7 +50,12 @@ type AuthContextType = {
   verifyLogin: (
     email: string,
     token: string
-  ) => Promise<{ success: boolean; message: string }>;
+  ) => Promise<{
+    success: boolean;
+    message: string;
+    user?: User;
+    token?: string;
+  }>;
   signup: (
     userData: SignupData
   ) => Promise<{ success: boolean; message: string }>;

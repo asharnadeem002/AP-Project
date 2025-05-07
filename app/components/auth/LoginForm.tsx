@@ -42,6 +42,15 @@ export function LoginForm() {
   const router = useRouter();
   const { login, verifyLogin } = useAuth();
 
+  // Get redirect URL from query params
+  const getRedirectPath = () => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get("redirect_to") || "/dashboard";
+    }
+    return "/dashboard";
+  };
+
   const {
     register: registerLogin,
     handleSubmit: handleLoginSubmit,
@@ -86,7 +95,14 @@ export function LoginForm() {
 
       if (result.success) {
         toast.success("Login successful");
-        router.push("/dashboard");
+
+        // Handle role-based redirects
+        if (result.user && result.user.role === "ADMIN") {
+          router.push("/dashboard/admin");
+        } else {
+          // Use the redirect path or fallback to dashboard
+          router.push(getRedirectPath());
+        }
       } else {
         toast.error(result.message || "Verification failed");
       }

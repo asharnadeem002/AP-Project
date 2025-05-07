@@ -81,26 +81,41 @@ export function authMiddleware(request: NextRequest) {
     "/verify-email",
     "/forgot-password",
     "/reset-password",
+    "/blog",
+    "/explore",
+    "/tags",
+    // Add other public paths here
   ];
 
   const adminPaths = [
     "/dashboard/admin",
     "/dashboard/admin/users",
+    "/dashboard/admin/pending-users",
     "/dashboard/admin/subscriptions",
+    "/dashboard/admin/analytics",
+    "/dashboard/admin/settings",
   ];
 
   const path = request.nextUrl.pathname;
+
+  // Handle public blog posts, tag pages, etc.
+  if (path.startsWith("/blog/") || path.startsWith("/tags/")) {
+    return NextResponse.next();
+  }
 
   // Allow access to public paths
   if (publicPaths.some((p) => path === p || path.startsWith(p + "/"))) {
     return NextResponse.next();
   }
 
-  // Check authentication
+  // Check authentication for protected routes
   const token = request.cookies.get("authToken")?.value;
 
   if (!token) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const redirectUrl = new URL("/login", request.url);
+    // Add a redirect_to parameter to redirect back after login
+    redirectUrl.searchParams.set("redirect_to", path);
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Verify the token
