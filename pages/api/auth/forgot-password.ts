@@ -71,7 +71,7 @@ export default async function handler(
     });
 
     // Send password reset email
-    await sendEmail(user.email, "passwordReset", resetToken);
+    await sendEmail(user.email, "passwordReset", { token: resetToken });
 
     return res.status(200).json({
       success: true,

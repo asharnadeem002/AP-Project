@@ -84,7 +84,7 @@ export default async function handler(
     });
 
     // Send verification email
-    await sendEmail(user.email, "login", loginToken);
+    await sendEmail(user.email, "login", { token: loginToken });
 
     return res.status(200).json({
       success: true,
