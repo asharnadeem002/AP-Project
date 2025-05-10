@@ -9,15 +9,70 @@ import {
 } from "../../app/components/shared/Card";
 import { useAuth } from "../../app/lib/AuthContext";
 import { useRouter } from "next/router";
-import { LoadingPage, Loader } from "../../app/components/shared/Loader";
+import { LoadingPage } from "../../app/components/shared/Loader";
 import { GetServerSideProps } from "next";
+import { verifyJwt } from "../../app/lib/jwt";
+import prisma from "../../app/lib/db";
 
 // Use GetServerSideProps for protected routes
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  // This will always be up-to-date when requested
-  return {
-    props: {},
-  };
+  // Get auth token from cookies
+  const token = context.req.cookies.authToken;
+
+  // If no token, redirect to login
+  if (!token) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
+
+  // Verify token
+  try {
+    const payload = verifyJwt(token);
+
+    if (!payload || !payload.userId) {
+      throw new Error("Invalid token");
+    }
+
+    // Get user from database
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+    });
+
+    // Redirect based on user role
+    if (user?.role === "ADMIN") {
+      return {
+        redirect: {
+          destination: "/dashboard/admin",
+          permanent: false,
+        },
+      };
+    } else if (user?.role === "USER") {
+      return {
+        redirect: {
+          destination: "/dashboard/user",
+          permanent: false,
+        },
+      };
+    }
+
+    // If we get here, just render the page with empty props
+    return {
+      props: {},
+    };
+  } catch (error) {
+    // If token verification fails, redirect to login
+    console.error("Dashboard auth error:", error);
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
 };
 
 export default function DashboardPage() {

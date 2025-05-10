@@ -88,18 +88,28 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     });
     const activeSubscriptions = await prisma.subscription.count({
       where: { status: "ACTIVE" },
-    });
-
-    // Calculate total revenue
+    }); // Calculate total revenue
     const subscriptions = await prisma.subscription.findMany({
       where: { status: "ACTIVE" },
-      include: { plan: true },
     });
 
     // This is just a mock calculation
     const totalRevenue = subscriptions.reduce((total, sub) => {
-      // Use a default value if plan price is not available
-      const price = sub.plan?.price || 0;
+      // Define price based on subscription plan
+      let price = 0;
+      switch (sub.plan) {
+        case "BASIC":
+          price = 9.99;
+          break;
+        case "PREMIUM":
+          price = 19.99;
+          break;
+        case "ENTERPRISE":
+          price = 49.99;
+          break;
+        default:
+          price = 0; // FREE plan
+      }
       return total + price;
     }, 0);
 
@@ -118,24 +128,39 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       email: user.email,
       registeredAt: user.createdAt.toISOString(),
       status: user.isApproved ? "Approved" : "Pending",
-    }));
-
-    // Get recent subscriptions
+    })); // Get recent subscriptions
     const recentSubscriptionsData = await prisma.subscription.findMany({
       orderBy: { createdAt: "desc" },
       take: 3,
       include: {
         user: true,
-        plan: true,
       },
     });
 
-    const recentSubscriptions = recentSubscriptionsData.map((sub) => ({
-      planName: sub.plan?.name || "Unknown Plan",
-      username: sub.user?.username || "Unknown User",
-      amount: sub.plan?.price || 0,
-      date: sub.createdAt.toISOString(),
-    }));
+    const recentSubscriptions = recentSubscriptionsData.map((sub) => {
+      // Calculate price based on plan enum
+      let amount = 0;
+      switch (sub.plan) {
+        case "BASIC":
+          amount = 9.99;
+          break;
+        case "PREMIUM":
+          amount = 19.99;
+          break;
+        case "ENTERPRISE":
+          amount = 49.99;
+          break;
+        default:
+          amount = 0; // FREE plan
+      }
+
+      return {
+        planName: sub.plan, // This is already a string enum like "BASIC", "PREMIUM"
+        username: sub.user?.username || "Unknown User",
+        amount: amount,
+        date: sub.createdAt.toISOString(),
+      };
+    });
 
     return {
       props: {
@@ -171,16 +196,15 @@ export default function AdminDashboardPage({
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState(initialStats);
-
   useEffect(() => {
     // Client-side auth check as a backup
     if (!isLoading && !user) {
-      router.push("/login");
+      window.location.href = "/login";
       return;
     }
 
     if (!isLoading && user?.role !== "ADMIN") {
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
       return;
     }
 

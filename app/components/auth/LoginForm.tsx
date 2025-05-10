@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import Link from "next/link";
 import { Input } from "../shared/Input";
 import { Button } from "../shared/Button";
@@ -18,7 +18,7 @@ import {
 import { useAuth } from "../../lib/AuthContext";
 import { toast } from "react-toastify";
 
-// Validation schema
+// Validation schemas
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
@@ -39,16 +39,13 @@ export function LoginForm() {
   const [resendLoading, setResendLoading] = useState(false);
   const [verificationNeeded, setVerificationNeeded] = useState(false);
   const [email, setEmail] = useState("");
-  const router = useRouter();
   const { login, verifyLogin } = useAuth();
+  const router = useRouter();
 
   // Get redirect URL from query params
   const getRedirectPath = () => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get("redirect_to") || "/dashboard";
-    }
-    return "/dashboard";
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("redirect_to") || "/dashboard";
   };
 
   const {
@@ -92,15 +89,23 @@ export function LoginForm() {
     try {
       setIsLoading(true);
       const result = await verifyLogin(email, data.code);
-
       if (result.success) {
         toast.success("Login successful");
 
-        // Handle role-based redirects
-        if (result.user && result.user.role === "ADMIN") {
-          router.push("/dashboard/admin");
+        // Ensure token is stored in localStorage
+        if (result.token) {
+          localStorage.setItem("authToken", result.token);
+          console.log("Stored token:", localStorage.getItem("authToken"));
         } else {
-          // Use the redirect path or fallback to dashboard
+          throw new Error("Token not returned from server");
+        }
+
+        // Handle role-based redirects using router.push for client-side navigation
+        if (result.user?.role === "ADMIN") {
+          router.push("/dashboard/admin");
+        } else if (result.user?.role === "USER") {
+          router.push("/dashboard/user");
+        } else {
           router.push(getRedirectPath());
         }
       } else {
@@ -184,7 +189,7 @@ export function LoginForm() {
                 onClick={handleBackToLogin}
                 className="text-sm text-gray-600 hover:text-gray-800"
               >
-                &larr; Back to login
+                ← Back to login
               </button>
 
               <button

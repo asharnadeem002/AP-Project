@@ -15,12 +15,13 @@ export function middleware(request: NextRequest) {
     "/api/auth/signup",
     "/api/auth/verify-email",
     "/api/auth/verify-login",
+    "/api/auth/logout",
     "/api/auth/forgot-password",
     "/api/auth/reset-password",
   ];
-
-  // Define paths that require admin role
+  // Define paths that require specific roles
   const adminPaths = ["/dashboard/admin", "/api/admin"];
+  const userPaths = ["/dashboard/user"];
 
   const path = request.nextUrl.pathname;
 
@@ -55,13 +56,19 @@ export function middleware(request: NextRequest) {
         JSON.stringify({ success: false, message: "Invalid token" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
-    }
-
-    // Check admin paths
+    } // Check admin paths
     if (
       adminPaths.some((p) => path.startsWith(p)) &&
       payload.role !== "ADMIN"
     ) {
+      return new NextResponse(
+        JSON.stringify({ success: false, message: "Insufficient permissions" }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check user paths
+    if (userPaths.some((p) => path.startsWith(p)) && payload.role !== "USER") {
       return new NextResponse(
         JSON.stringify({ success: false, message: "Insufficient permissions" }),
         { status: 403, headers: { "Content-Type": "application/json" } }
@@ -86,9 +93,13 @@ export function middleware(request: NextRequest) {
     response.cookies.delete("authToken");
     return response;
   }
-
   // Check admin paths for page routes
   if (adminPaths.some((p) => path.startsWith(p)) && payload.role !== "ADMIN") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // Check user paths for page routes
+  if (userPaths.some((p) => path.startsWith(p)) && payload.role !== "USER") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -102,8 +113,11 @@ export const config = {
      * Match all request paths except for:
      * 1. _next/static (static files)
      * 2. _next/image (image optimization files)
-     * 3. favicon.ico (favicon file)
+     * 3. _next/data (Next.js data fetch)
+     * 4. favicon.ico (favicon file)
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|_next/data|favicon.ico).*)",
+    // Also handle API routes
+    "/api/:path*",
   ],
 };

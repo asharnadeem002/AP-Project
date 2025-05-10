@@ -47,16 +47,21 @@ export default async function handler(
     const verificationToken = generateVerificationToken();
 
     // Update user with new verification token
-    await prisma.verificationToken.upsert({
-      where: { userId: user.id },
+    const existingToken = await prisma.token.findFirst({
+      where: { userId: user.id, type: "VERIFICATION" },
+    });
+
+    await prisma.token.upsert({
+      where: { id: existingToken?.id || "" }, // Use an existing ID or default to an empty string
       update: {
         token: verificationToken,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
       create: {
         userId: user.id,
         token: verificationToken,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+        type: "VERIFICATION",
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
     });
 

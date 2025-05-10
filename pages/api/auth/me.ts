@@ -25,7 +25,9 @@ export default async function handler(
     const token = authHeader.split(" ")[1];
 
     // Verify the token
+    console.log("Received token:", token);
     const payload = verifyJwt(token);
+    console.log("Verified payload:", payload);
 
     if (!payload) {
       return res.status(401).json({ success: false, message: "Invalid token" });

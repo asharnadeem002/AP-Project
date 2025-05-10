@@ -86,31 +86,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = localStorage.getItem("authToken");
+    checkAuth();
+  }, [user]); // Re-run when user changes
 
-        if (token) {
-          const response = await axios.get("/api/auth/me", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (response.data.user) {
-            setUser(response.data.user);
-          }
-        }
-      } catch (error: unknown) {
-        localStorage.removeItem("authToken");
-        console.error("Auth check error:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
+  useEffect(() => {
     checkAuth();
   }, []);
+
+  const checkAuth = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+
+      if (token) {
+        const response = await axios.get("/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.user) {
+          setUser(response.data.user);
+        }
+      }
+    } catch (error: unknown) {
+      localStorage.removeItem("authToken");
+      console.error("Auth check error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
@@ -127,13 +131,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: "Unexpected login error" };
     }
   };
-
   const verifyLogin = async (email: string, token: string) => {
     try {
       const response = await axios.post("/api/auth/verify-login", {
         email,
         token,
       });
+      console.log("Response after verification: ", response.data);
 
       if (response.data.success && response.data.token) {
         localStorage.setItem("authToken", response.data.token);
@@ -242,9 +246,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: "Unexpected error" };
     }
   };
-
-  const logout = () => {
+  const logout = async () => {
+    // Clear client-side storage
     localStorage.removeItem("authToken");
+
+    // Clear the server-side cookie
+    try {
+      await axios.post("/api/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+
     setUser(null);
   };
 
