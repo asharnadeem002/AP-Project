@@ -80,7 +80,7 @@ export default function CreateBlogPost() {
   return (
     <>
       <Head>
-        <title>Create Blog Post | Admin Dashboard</title>
+        <title>{`Create Blog Post | Admin Dashboard`}</title>
       </Head>
 
       <DashboardLayout>

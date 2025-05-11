@@ -21,7 +21,7 @@ interface BlogPost {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
-    const posts = await prisma.BlogPost.findMany({
+    const posts = await prisma.blogPost.findMany({
       where: { published: true },
       select: { slug: true },
     });
@@ -45,7 +45,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   try {
-    const post = await prisma.BlogPost.findFirst({
+    const post = await prisma.blogPost.findFirst({
       where: { 
         slug: String(params?.slug),
         published: true
@@ -91,7 +91,7 @@ export default function BlogPostPage({ post }: BlogPostPageProps) {
   return (
     <>
       <Head>
-        <title>{post.title} | SnapTrace Blog</title>
+        <title>{`${post.title} | SnapTrace Blog`}</title>
         <meta name="description" content={post.description} />
       </Head>
 

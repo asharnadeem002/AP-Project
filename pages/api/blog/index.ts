@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const posts = await prisma.BlogPost.findMany({
+    const posts = await prisma.blogPost.findMany({
       where: { published: true },
       orderBy: { createdAt: 'desc' },
       select: {

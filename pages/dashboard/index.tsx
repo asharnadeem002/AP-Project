@@ -11,7 +11,7 @@ import { useAuth } from "../../app/lib/AuthContext";
 import { useRouter } from "next/router";
 import { LoadingPage } from "../../app/components/shared/Loader";
 import { GetServerSideProps } from "next";
-import { verifyJwt } from "../../app/lib/jwt";
+import { verifyJwt, JWTPayload } from "../../app/lib/jwt";
 import prisma from "../../app/lib/db";
 
 // Use GetServerSideProps for protected routes
@@ -31,15 +31,17 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   // Verify token
   try {
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
-    if (!payload || !payload.userId) {
+    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
       throw new Error("Invalid token");
     }
 
+    const typedPayload = payload as JWTPayload;
+
     // Get user from database
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: typedPayload.userId },
     });
 
     // Redirect based on user role

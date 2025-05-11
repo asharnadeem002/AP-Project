@@ -17,7 +17,7 @@ import {
 import { Input } from "../app/components/shared/Input";
 import { Button } from "../app/components/shared/Button";
 import { useAuth } from "../app/lib/AuthContext";
-import { LoadingPage, LoadingOverlay } from "../app/components/shared/Loader";
+import { LoadingPage } from "../app/components/shared/Loader";
 import { GetStaticProps } from "next";
 
 // Validation schema

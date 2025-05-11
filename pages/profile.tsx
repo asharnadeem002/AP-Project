@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "../app/components/shared/Card";
 import { useAuth } from "../app/lib/AuthContext";
-import { verifyJwt } from "../app/lib/jwt";
+import { verifyJwt, JWTPayload } from "../app/lib/jwt";
 import prisma from "../app/lib/db";
 import { LoadingPage } from "../app/components/shared/Loader";
 import { toast } from "react-toastify";
@@ -58,15 +58,17 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   try {
     // Verify token
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
-    if (!payload || !payload.userId) {
+    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
       throw new Error("Invalid token");
     }
 
+    const typedPayload = payload as JWTPayload;
+
     // Get user data from database
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: typedPayload.userId },
       select: {
         id: true,
         email: true,
@@ -113,7 +115,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
  * This page is server-side rendered with the user's profile data
  */
 export default function ProfilePage({ userProfile }: ProfilePageProps) {
-  const { user, updateProfile, isLoading } = useAuth();
+  const { updateProfile, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     username: userProfile.username,
     phoneNumber: userProfile.phoneNumber || "",

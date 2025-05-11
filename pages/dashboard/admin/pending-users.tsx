@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import axios from "axios";
@@ -43,21 +43,7 @@ export default function PendingUsersPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [approvingUser, setApprovingUser] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login");
-      return;
-    }
-
-    if (!isLoading && user?.role !== "ADMIN") {
-      router.push("/dashboard");
-      return;
-    }
-
-    fetchPendingUsers(1);
-  }, [user, isLoading, router]);
-
-  const fetchPendingUsers = async (page: number) => {
+  const fetchPendingUsers = useCallback(async (page: number) => {
     if (!user) return;
 
     try {
@@ -83,7 +69,21 @@ export default function PendingUsersPage() {
     } finally {
       setLoadingUsers(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+      return;
+    }
+
+    if (!isLoading && user?.role !== "ADMIN") {
+      router.push("/dashboard");
+      return;
+    }
+
+    fetchPendingUsers(1);
+  }, [user, isLoading, router, fetchPendingUsers]);
 
   const approveUser = async (userId: string) => {
     if (!user) return;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { DashboardLayout } from '../../../../../app/components/dashboard/DashboardLayout';
@@ -27,13 +27,7 @@ export default function EditBlogPost() {
     published: false,
   });
 
-  useEffect(() => {
-    if (slug) {
-      fetchPost();
-    }
-  }, [slug]);
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/blog/slug/${slug}`, {
         credentials: 'include',
@@ -47,7 +41,13 @@ export default function EditBlogPost() {
       console.error('Error fetching post:', error);
       setError('Failed to fetch post');
     }
-  };
+  }, [slug]);
+
+  useEffect(() => {
+    if (slug) {
+      fetchPost();
+    }
+  }, [slug, fetchPost]);
 
   const generateSlug = (title: string) => {
     return title

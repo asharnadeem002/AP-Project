@@ -1,5 +1,6 @@
 import React, { JSX, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   HomeIcon,
@@ -170,10 +171,12 @@ export function Sidebar() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               {user.profilePicture ? (
-                <img
-                  className="h-8 w-8 rounded-full"
+                <Image
+                  className="rounded-full"
                   src={user.profilePicture}
                   alt={user.username}
+                  width={32}
+                  height={32}
                 />
               ) : (
                 <div className="h-8 w-8 rounded-full bg-slate-600 flex items-center justify-center">

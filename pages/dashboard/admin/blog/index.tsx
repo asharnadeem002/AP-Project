@@ -127,7 +127,7 @@ export default function AdminBlogPage() {
   return (
     <>
       <Head>
-        <title>Blog Management | Admin Dashboard</title>
+        <title>{`Blog Management | Admin Dashboard`}</title>
       </Head>
 
       <DashboardLayout>

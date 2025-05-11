@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "../../../app/components/shared/Card";
 import { Input } from "../../../app/components/shared/Input";
+import { Prisma } from "@prisma/client";
 
 // Types for our data
 interface User {
@@ -85,7 +86,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     const status = (context.query.status as string) || "";
 
     // Build query filter
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
 
     if (search) {
       where.OR = [

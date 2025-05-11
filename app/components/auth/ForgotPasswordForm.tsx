@@ -51,7 +51,6 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 export function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [resetRequested, setResetRequested] = useState(false);
-  const [email, setEmail] = useState("");
   const router = useRouter();
   const { forgotPassword, resetPassword } = useAuth();
 
@@ -77,7 +76,6 @@ export function ForgotPasswordForm() {
       const result = await forgotPassword(data.email);
 
       if (result.success) {
-        setEmail(data.email);
         setResetRequested(true);
         toast.success(
           result.message || "Reset instructions sent to your email"

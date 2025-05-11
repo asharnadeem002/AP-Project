@@ -20,7 +20,7 @@ interface Props {
 }
 
 // Server-side props to handle edit mode
-export const getServerSideProps: GetServerSideProps = async ({ params, req }) => {
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const action = params?.action as string;
   
   if (action !== 'create' && action !== 'edit') {
@@ -42,7 +42,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req }) =>
           action,
         },
       };
-    } catch (error) {
+    } catch {
       return {
         notFound: true,
       };
@@ -121,7 +121,7 @@ export default function BlogPostForm({ post: initialPost, action }: Props) {
   return (
     <>
       <Head>
-        <title>{action === 'create' ? 'Create New Post' : 'Edit Post'} | Admin Dashboard</title>
+        <title>{`${action === 'create' ? 'Create New Post' : 'Edit Post'} | Admin Dashboard`}</title>
       </Head>
 
       <DashboardLayout>

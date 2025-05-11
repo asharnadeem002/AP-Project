@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     try {
-      const post = await prisma.BlogPost.findUnique({
+      const post = await prisma.blogPost.findUnique({
         where: { slug: String(slug) },
         include: {
           author: {

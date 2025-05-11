@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   Bars3Icon,
   XMarkIcon,
@@ -81,10 +82,12 @@ export function Header() {
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                 >
                   {user.profilePicture ? (
-                    <img
-                      className="h-8 w-8 rounded-full"
+                    <Image
+                      className="rounded-full"
                       src={user.profilePicture}
                       alt="User profile"
+                      width={32}
+                      height={32}
                     />
                   ) : (
                     <UserCircleIcon className="h-8 w-8 text-gray-500" />

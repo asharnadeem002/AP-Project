@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { slug } = req.query;
 
   try {
-    const post = await prisma.BlogPost.findFirst({
+    const post = await prisma.blogPost.findFirst({
       where: { 
         slug: String(slug),
         published: true
