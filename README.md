@@ -62,9 +62,15 @@ This project demonstrates various Next.js data fetching strategies:
    ```
 
 4. Set up the database
+
+   Run migrations (if required):
+   npx prisma migrate reset --force
+   npx prisma generate
    ```bash
    npx prisma db push
    ```
+   Apply migrations (if needed):
+   npx prisma migrate dev --name update_schema
 
 5. Create admin user(s)
    ```bash
