@@ -12,6 +12,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChartBarIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../lib/AuthContext";
 
@@ -66,6 +67,11 @@ export function Sidebar() {
       name: "Dashboard",
       href: "/dashboard/admin",
       icon: (props: React.ComponentProps<"svg">) => <HomeIcon {...props} />,
+    },
+    {
+      name: "Blog",
+      href: "/dashboard/admin/blog",
+      icon: (props: React.ComponentProps<"svg">) => <PencilSquareIcon {...props} />,
     },
     {
       name: "Users",

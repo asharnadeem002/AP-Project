@@ -39,16 +39,22 @@ export async function middleware(request: NextRequest) {
 
   // Check for API routes that require authentication
   if (path.startsWith("/api/")) {
+    // Try to get token from Authorization header first
     const authHeader = request.headers.get("authorization");
+    let token: string | null = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // If no token in header, try cookies
+    if (!token) {
+      token = request.cookies.get("authToken")?.value ?? null;
+    }
+
+    if (!token) {
       return new NextResponse(
         JSON.stringify({ success: false, message: "Unauthorized" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.split(" ")[1];
     const payload = await verifyJwt(token);
 
     if (!payload) {

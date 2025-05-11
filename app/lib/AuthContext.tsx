@@ -85,36 +85,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Single useEffect for auth check
   useEffect(() => {
-    checkAuth();
-  }, [user]); // Re-run when user changes
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem("authToken");
-
-      if (token) {
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+  
+        if (!token) {
+          setIsLoading(false);
+          return;
+        }
+  
         const response = await axios.get("/api/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-
+  
         if (response.data.user) {
           setUser(response.data.user);
         }
+      } catch (error: unknown) {
+        localStorage.removeItem("authToken");
+        console.error("Auth check error:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error: unknown) {
-      localStorage.removeItem("authToken");
-      console.error("Auth check error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    checkAuth();
+  }, []); // Only run on mount
 
   const login = async (email: string, password: string) => {
     try {
@@ -131,13 +131,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: "Unexpected login error" };
     }
   };
+
   const verifyLogin = async (email: string, token: string) => {
     try {
       const response = await axios.post("/api/auth/verify-login", {
         email,
         token,
       });
-      console.log("Response after verification: ", response.data);
 
       if (response.data.success && response.data.token) {
         localStorage.setItem("authToken", response.data.token);
@@ -246,18 +246,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: "Unexpected error" };
     }
   };
-  const logout = async () => {
-    // Clear client-side storage
-    localStorage.removeItem("authToken");
 
-    // Clear the server-side cookie
+  const logout = async () => {
     try {
       await axios.post("/api/auth/logout");
+      localStorage.removeItem("authToken");
+      setUser(null);
     } catch (error) {
       console.error("Logout error:", error);
     }
-
-    setUser(null);
   };
 
   const updateProfile = async (data: UpdateProfileData) => {
