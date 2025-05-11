@@ -4,6 +4,8 @@ import { AuthLayout } from "../app/components/auth/AuthLayout";
 import { LoginForm } from "../app/components/auth/LoginForm";
 import { GetStaticProps } from "next";
 
+//check commit github desktop
+
 // This function gets called at build time
 export const getStaticProps: GetStaticProps = async () => {
   return {
