@@ -189,13 +189,13 @@ export function SignupForm() {
               <div className="w-full mb-4">
                 <label
                   htmlFor="gender"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-white mb-1"
                 >
                   Gender
                 </label>
                 <select
                   id="gender"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-white bg-gray-700 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   {...register("gender")}
                 >
                   <option value="male">Male</option>
