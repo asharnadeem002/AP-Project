@@ -24,7 +24,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const userId = (payload as CustomJWTPayload).userId;
 
     if (req.method === 'GET') {
-      const posts = await prisma.blogPost.findMany({
+      const posts = await prisma.BlogPost.findMany({
         orderBy: { createdAt: 'desc' },
         include: {
           author: {
@@ -45,7 +45,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
-      const existingPost = await prisma.blogPost.findUnique({
+      const existingPost = await prisma.BlogPost.findUnique({
         where: { slug },
       });
 
@@ -53,7 +53,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         return res.status(400).json({ error: 'Slug already exists' });
       }
 
-      const post = await prisma.blogPost.create({
+      const post = await prisma.BlogPost.create({
         data: {
           title,
           description,
