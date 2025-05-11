@@ -37,6 +37,11 @@ export function Sidebar() {
       icon: (props: React.ComponentProps<"svg">) => <HomeIcon {...props} />,
     },
     {
+      name: "Blog",
+      href: "/blog",
+      icon: (props: React.ComponentProps<"svg">) => <DocumentTextIcon {...props} />,
+    },
+    {
       name: "Gallery",
       href: "/gallery",
       icon: (props: React.ComponentProps<"svg">) => <PhotoIcon {...props} />,
