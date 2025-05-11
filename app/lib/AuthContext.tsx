@@ -90,18 +90,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem("authToken");
-  
+
         if (!token) {
           setIsLoading(false);
           return;
         }
-  
+
         const response = await axios.get("/api/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-  
+
         if (response.data.user) {
           setUser(response.data.user);
         }
@@ -233,6 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await axios.post("/api/auth/reset-password", {
         token,
         password: newPassword,
+        confirmPassword: newPassword,
       });
       return response.data;
     } catch (error: unknown) {

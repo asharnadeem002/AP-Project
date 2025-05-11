@@ -45,18 +45,20 @@ export function Header() {
   return (
     <header className="bg-white shadow-sm dark:bg-slate-900 sticky top-0 z-50">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <div className="flex">
-            <Link href="/" className="flex items-center">
-              <span className="text-xl font-bold text-blue-600 dark:text-blue-500">
-                SnapTrace
-              </span>
-            </Link>
+        <div className="flex h-16 items-center">
+          {/* Left container */}
+          <div className="flex-1 flex items-center">
+            {!user && (
+              <Link href="/" className="flex items-center">
+                <span className="text-xl font-bold text-blue-600 dark:text-blue-500">
+                  SnapTrace
+                </span>
+              </Link>
+            )}
           </div>
 
-          {/* Desktop navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-8">
+          {/* Center container: Desktop navigation */}
+          <div className="flex-1 hidden md:flex justify-center items-center space-x-8">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -72,10 +74,10 @@ export function Header() {
             ))}
           </div>
 
-          {/* Right side items - Auth buttons or profile menu */}
-          <div className="flex items-center">
+          {/* Right container */}
+          <div className="flex-1 flex items-center justify-end">
             {user ? (
-              <div className="relative ml-3">
+              <div className="relative">
                 <button
                   type="button"
                   className="flex items-center rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -96,14 +98,13 @@ export function Header() {
 
                 {/* Profile dropdown */}
                 {profileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-slate-800">
+                  <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-slate-800">
                     <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                       <p className="text-sm font-medium">{user.username}</p>
                       <p className="text-xs text-gray-500 truncate">
                         {user.email}
                       </p>
                     </div>
-
                     {profileMenuItems.map((item) => (
                       <Link
                         key={item.name}
@@ -114,7 +115,6 @@ export function Header() {
                         {item.name}
                       </Link>
                     ))}
-
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-slate-700"
@@ -125,7 +125,7 @@ export function Header() {
                 )}
               </div>
             ) : (
-              <div className="hidden md:flex md:items-center md:space-x-4">
+              <div className="hidden md:flex items-center space-x-4">
                 <Link
                   href="/login"
                   className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300"
@@ -176,27 +176,24 @@ export function Header() {
                   {link.name}
                 </Link>
               ))}
-
               {/* Show auth links in mobile menu only if user is not logged in */}
               {!user && (
-                <>
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4 pb-3">
-                    <Link
-                      href="/login"
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-slate-800"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Sign in
-                    </Link>
-                    <Link
-                      href="/signup"
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-slate-800"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Sign up
-                    </Link>
-                  </div>
-                </>
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 pb-3">
+                  <Link
+                    href="/login"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-slate-800"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-slate-800"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign up
+                  </Link>
+                </div>
               )}
             </div>
           </div>

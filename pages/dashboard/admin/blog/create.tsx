@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import Head from 'next/head';
-import { DashboardLayout } from '../../../../app/components/dashboard/DashboardLayout';
-import { Button } from '../../../../app/components/shared/Button';
+import React, { useState } from "react";
+import { useRouter } from "next/router";
+import Head from "next/head";
+import { DashboardLayout } from "../../../../app/components/dashboard/DashboardLayout";
+import { Button } from "../../../../app/components/shared/Button";
 
 export default function CreateBlogPost() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    content: '',
-    slug: '',
+    title: "",
+    description: "",
+    content: "",
+    slug: "",
     published: false,
   });
 
@@ -36,8 +36,8 @@ export default function CreateBlogPost() {
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
-      .replace(/[^a-zA-Z0-9\s]/g, '')
-      .replace(/\s+/g, '-');
+      .replace(/[^a-zA-Z0-9\s]/g, "")
+      .replace(/\s+/g, "-");
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,24 +54,26 @@ export default function CreateBlogPost() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/admin/blog', {
-        method: 'POST',
-        credentials: 'include',
+      const response = await fetch("/api/admin/blog", {
+        method: "POST",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create blog post');
+        throw new Error(error.error || "Failed to create blog post");
       }
 
-      router.push('/dashboard/admin/blog');
+      router.push("/dashboard/admin/blog");
     } catch (error) {
-      console.error('Error creating blog post:', error);
-      alert(error instanceof Error ? error.message : 'Failed to create blog post');
+      console.error("Error creating blog post:", error);
+      alert(
+        error instanceof Error ? error.message : "Failed to create blog post"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -87,7 +89,11 @@ export default function CreateBlogPost() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold">Create Blog Post</h1>
-            <Button onClick={() => router.back()} variant="outline">
+            <Button
+              className="text-red-600"
+              onClick={() => router.back()}
+              variant="outline"
+            >
               Cancel
             </Button>
           </div>
@@ -95,7 +101,10 @@ export default function CreateBlogPost() {
           <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
             <div className="bg-white rounded-lg shadow overflow-hidden p-6 space-y-6">
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Title
                 </label>
                 <input
@@ -110,7 +119,10 @@ export default function CreateBlogPost() {
               </div>
 
               <div>
-                <label htmlFor="slug" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="slug"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Slug
                 </label>
                 <input
@@ -125,7 +137,10 @@ export default function CreateBlogPost() {
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Description
                 </label>
                 <input
@@ -140,7 +155,10 @@ export default function CreateBlogPost() {
               </div>
 
               <div>
-                <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="content"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Content
                 </label>
                 <textarea
@@ -163,7 +181,10 @@ export default function CreateBlogPost() {
                   onChange={handleCheckboxChange}
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                 />
-                <label htmlFor="published" className="ml-2 block text-sm text-gray-700">
+                <label
+                  htmlFor="published"
+                  className="ml-2 block text-sm text-gray-700"
+                >
                   Publish immediately
                 </label>
               </div>
@@ -174,7 +195,7 @@ export default function CreateBlogPost() {
                   disabled={isSubmitting}
                   className="w-full sm:w-auto"
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Post'}
+                  {isSubmitting ? "Creating..." : "Create Post"}
                 </Button>
               </div>
             </div>
@@ -183,4 +204,4 @@ export default function CreateBlogPost() {
       </DashboardLayout>
     </>
   );
-} 
+}

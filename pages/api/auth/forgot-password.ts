@@ -3,7 +3,6 @@ import { z } from "zod";
 import prisma from "../../../app/lib/db";
 import { sendEmail, generateVerificationToken } from "../../../app/lib/email";
 
-// Validation schema
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
@@ -12,7 +11,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -20,17 +18,14 @@ export default async function handler(
   }
 
   try {
-    // Validate request body
     const validatedData = forgotPasswordSchema.parse(req.body);
 
-    // Find the user
     const user = await prisma.user.findUnique({
       where: {
         email: validatedData.email,
       },
     });
 
-    // For security reasons, don't reveal whether the email exists or not
     if (!user) {
       return res.status(200).json({
         success: true,
@@ -39,7 +34,6 @@ export default async function handler(
       });
     }
 
-    // Check if user email is verified
     if (!user.isVerified) {
       return res.status(403).json({
         success: false,
@@ -47,12 +41,10 @@ export default async function handler(
       });
     }
 
-    // Generate reset token
     const resetToken = generateVerificationToken();
     const tokenExpiry = new Date();
-    tokenExpiry.setHours(tokenExpiry.getHours() + 1); // Token valid for 1 hour
+    tokenExpiry.setHours(tokenExpiry.getHours() + 1);
 
-    // Delete any existing password reset tokens for this user
     await prisma.token.deleteMany({
       where: {
         userId: user.id,
@@ -60,7 +52,6 @@ export default async function handler(
       },
     });
 
-    // Store the new token
     await prisma.token.create({
       data: {
         token: resetToken,
@@ -70,8 +61,15 @@ export default async function handler(
       },
     });
 
-    // Send password reset email
-    await sendEmail(user.email, "passwordReset", { token: resetToken });
+    try {
+      await sendEmail(user.email, "passwordReset", { token: resetToken });
+    } catch (sendError) {
+      console.error("Error sending password reset email:", sendError);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send password reset email. Please try again later.",
+      });
+    }
 
     return res.status(200).json({
       success: true,
