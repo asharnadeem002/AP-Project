@@ -9,8 +9,8 @@ const transporter = nodemailer.createTransport({
   port: Number(process.env.EMAIL_SERVER_PORT) || 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_SERVER_USER || "asharnadeem002@gmail.com",
-    pass: process.env.EMAIL_SERVER_PASSWORD || "zpnimmsuhefwswcb",
+    user: process.env.EMAIL_SERVER_USER || "abdullahshoukat662@gmail.com",
+    pass: process.env.EMAIL_SERVER_PASSWORD || "jiwlimqbniteotoo",
   },
 });
 
@@ -161,7 +161,7 @@ export async function sendEmail(
 ) {
   try {
     const fromEmail =
-      process.env.EMAIL_FROM || "SnapTrace <asharnadeem002@gmail.com>";
+      process.env.EMAIL_FROM || "SnapTrace <abdullahshoukat662@gmail.com>";
     const emailContent = getEmailContent(template, context);
 
     const info = await transporter.sendMail({

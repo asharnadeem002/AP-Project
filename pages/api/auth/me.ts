@@ -6,7 +6,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow GET requests
   if (req.method !== "GET") {
     return res
       .status(405)
@@ -14,29 +13,25 @@ export default async function handler(
   }
 
   try {
-    // Get the authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    // Extract the token
     const token = authHeader.split(" ")[1];
-
-    // Verify the token
-    console.log("Received token:", token);
-    const payload = verifyJwt(token);
-    console.log("Verified payload:", payload);
+    
+    // Add await here since verifyJwt is now async
+    const payload = await verifyJwt(token);
 
     if (!payload) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
-    // Get the user data
+    // Fix the Prisma query syntax
     const user = await prisma.user.findUnique({
       where: {
-        id: payload.userId,
+        id: payload.userId
       },
       select: {
         id: true,
@@ -49,8 +44,8 @@ export default async function handler(
         isApproved: true,
         role: true,
         createdAt: true,
-        updatedAt: true,
-      },
+        updatedAt: true
+      }
     });
 
     if (!user) {
@@ -61,13 +56,13 @@ export default async function handler(
 
     return res.status(200).json({
       success: true,
-      user,
+      user
     });
   } catch (error) {
     console.error("Get current user error:", error);
     return res.status(500).json({
       success: false,
-      message: "Could not retrieve user data. Please try again later.",
+      message: "Could not retrieve user data. Please try again later."
     });
   }
 }

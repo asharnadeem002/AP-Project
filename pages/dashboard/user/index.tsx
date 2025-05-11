@@ -34,10 +34,8 @@ interface UserDashboardProps {
  * This function runs on every request to prepare data for the user dashboard
  */
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Get auth token from cookies
   const token = context.req.cookies.authToken;
 
-  // If no token, redirect to login
   if (!token) {
     return {
       redirect: {
@@ -47,17 +45,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  // Verify token
   try {
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
-    if (!payload || !payload.userId) {
+    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
       throw new Error("Invalid token");
     }
 
     // Get user from database
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: payload.userId as string },
     });
 
     // If user is admin, redirect to admin dashboard
@@ -91,7 +88,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         userId: user.id,
         isFavorite: true,
       },
-    }); // Get user's subscription
+    });
+
+    // Get user's subscription
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: user.id,

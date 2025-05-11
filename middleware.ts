@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyJwt } from "./app/lib/jwt";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   // Define public paths that don't require authentication
   const publicPaths = [
     "/",
@@ -49,14 +49,16 @@ export function middleware(request: NextRequest) {
     }
 
     const token = authHeader.split(" ")[1];
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
     if (!payload) {
       return new NextResponse(
         JSON.stringify({ success: false, message: "Invalid token" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
-    } // Check admin paths
+    }
+
+    // Check admin paths
     if (
       adminPaths.some((p) => path.startsWith(p)) &&
       payload.role !== "ADMIN"
@@ -85,7 +87,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const payload = verifyJwt(token);
+  const payload = await verifyJwt(token);
 
   if (!payload) {
     // Clear the invalid token
@@ -93,6 +95,7 @@ export function middleware(request: NextRequest) {
     response.cookies.delete("authToken");
     return response;
   }
+
   // Check admin paths for page routes
   if (adminPaths.some((p) => path.startsWith(p)) && payload.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/dashboard", request.url));

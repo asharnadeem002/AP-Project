@@ -62,8 +62,10 @@ export default async function handler(
       where: {
         id: token.id,
       },
-    }); // Generate JWT token
-    const jwtToken = signJwt({ userId: user.id, role: user.role });
+    });
+
+    // Generate JWT token
+    const jwtToken = await signJwt({ userId: user.id, role: user.role });
 
     // Return user data (excluding sensitive fields)
     const userData = {
@@ -78,8 +80,9 @@ export default async function handler(
       isApproved: user.isApproved,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-    }; // Set the token in an HTTP-only cookie that's accessible by the middleware
-    // Using SameSite=Lax to ensure the cookie is sent with navigation requests
+    };
+
+    // Set the token in an HTTP-only cookie that's accessible by the middleware
     res.setHeader(
       "Set-Cookie",
       `authToken=${jwtToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${

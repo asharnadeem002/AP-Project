@@ -44,10 +44,8 @@ interface UsersPageProps {
  * 3. Pre-rendering with user data for SEO and performance
  */
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Get auth token from cookies
   const token = context.req.cookies.authToken;
 
-  // If no token, redirect to login
   if (!token) {
     return {
       redirect: {
@@ -58,16 +56,15 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   try {
-    // Verify token
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
-    if (!payload || !payload.userId) {
+    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
       throw new Error("Invalid token");
     }
 
     // Get user from database
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: payload.userId as string },
     });
 
     // Check if user is admin

@@ -44,10 +44,8 @@ interface AdminDashboardProps {
  * 4. Pre-render the page with the latest data
  */
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Get auth token from cookies
   const token = context.req.cookies.authToken;
 
-  // If no token, redirect to login
   if (!token) {
     return {
       redirect: {
@@ -57,17 +55,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  // Verify token
   try {
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
-    if (!payload || !payload.userId) {
+    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
       throw new Error("Invalid token");
     }
 
     // Get user from database
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: payload.userId as string },
     });
 
     // Check if user is admin
@@ -81,21 +78,19 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
 
     // Get dashboard stats from database
-    // In a real app, these would be actual DB queries
     const totalUsers = await prisma.user.count();
     const pendingApprovals = await prisma.user.count({
       where: { isApproved: false },
     });
     const activeSubscriptions = await prisma.subscription.count({
       where: { status: "ACTIVE" },
-    }); // Calculate total revenue
+    });
+
     const subscriptions = await prisma.subscription.findMany({
       where: { status: "ACTIVE" },
     });
 
-    // This is just a mock calculation
     const totalRevenue = subscriptions.reduce((total, sub) => {
-      // Define price based on subscription plan
       let price = 0;
       switch (sub.plan) {
         case "BASIC":
@@ -108,7 +103,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           price = 49.99;
           break;
         default:
-          price = 0; // FREE plan
+          price = 0;
       }
       return total + price;
     }, 0);
@@ -128,7 +123,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       email: user.email,
       registeredAt: user.createdAt.toISOString(),
       status: user.isApproved ? "Approved" : "Pending",
-    })); // Get recent subscriptions
+    }));
+
+    // Get recent subscriptions
     const recentSubscriptionsData = await prisma.subscription.findMany({
       orderBy: { createdAt: "desc" },
       take: 3,
@@ -138,7 +135,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     });
 
     const recentSubscriptions = recentSubscriptionsData.map((sub) => {
-      // Calculate price based on plan enum
       let amount = 0;
       switch (sub.plan) {
         case "BASIC":
@@ -151,11 +147,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           amount = 49.99;
           break;
         default:
-          amount = 0; // FREE plan
+          amount = 0;
       }
 
       return {
-        planName: sub.plan, // This is already a string enum like "BASIC", "PREMIUM"
+        planName: sub.plan,
         username: sub.user?.username || "Unknown User",
         amount: amount,
         date: sub.createdAt.toISOString(),
@@ -175,7 +171,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       },
     };
   } catch (error) {
-    // If token verification fails, redirect to login
     console.error("Admin dashboard auth error:", error);
     return {
       redirect: {

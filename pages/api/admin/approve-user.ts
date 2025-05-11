@@ -29,9 +29,9 @@ export default async function handler(
     }
 
     const token = authHeader.split(" ")[1];
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
-    if (!payload) {
+    if (!payload || typeof payload !== 'object' || !('role' in payload)) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
