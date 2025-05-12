@@ -3,9 +3,7 @@ import type { NextRequest } from "next/server";
 import { verifyJwt } from "./app/lib/jwt";
 
 export async function middleware(request: NextRequest) {
-  // Define public paths that don't require authentication
   const publicPaths = [
-    "/",
     "/login",
     "/signup",
     "/verify-email",
@@ -19,31 +17,52 @@ export async function middleware(request: NextRequest) {
     "/api/auth/forgot-password",
     "/api/auth/reset-password",
   ];
-  // Define paths that require specific roles
   const adminPaths = ["/dashboard/admin", "/api/admin"];
   const userPaths = ["/dashboard/user"];
 
   const path = request.nextUrl.pathname;
 
-  // Allow access to static files and public paths
+  if (path === "/") {
+    const token = request.cookies.get("authToken")?.value;
+
+    if (!token) {
+      return NextResponse.next();
+    }
+
+    try {
+      const payload = await verifyJwt(token);
+
+      if (payload) {
+        if (payload.role === "ADMIN") {
+          return NextResponse.redirect(
+            new URL("/dashboard/admin", request.url)
+          );
+        } else if (payload.role === "USER") {
+          return NextResponse.redirect(new URL("/dashboard/user", request.url));
+        }
+      }
+    } catch {
+      return NextResponse.next();
+    }
+  }
+
   if (
     path.startsWith("/_next") ||
     path.startsWith("/static") ||
     path.startsWith("/images") ||
     path.startsWith("/api/public") ||
-    path.includes(".") || // Files with extensions
+    path.includes(".") ||
     publicPaths.some((p) => path === p || path.startsWith(p + "/"))
   ) {
     return NextResponse.next();
   }
 
-  // Check for API routes that require authentication
   if (path.startsWith("/api/")) {
-    // Try to get token from Authorization header first
     const authHeader = request.headers.get("authorization");
-    let token: string | null = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+    let token: string | null = authHeader?.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
 
-    // If no token in header, try cookies
     if (!token) {
       token = request.cookies.get("authToken")?.value ?? null;
     }
@@ -64,7 +83,6 @@ export async function middleware(request: NextRequest) {
       );
     }
 
-    // Check admin paths
     if (
       adminPaths.some((p) => path.startsWith(p)) &&
       payload.role !== "ADMIN"
@@ -75,7 +93,6 @@ export async function middleware(request: NextRequest) {
       );
     }
 
-    // Check user paths
     if (userPaths.some((p) => path.startsWith(p)) && payload.role !== "USER") {
       return new NextResponse(
         JSON.stringify({ success: false, message: "Insufficient permissions" }),
@@ -86,7 +103,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // For page routes
   const token = request.cookies.get("authToken")?.value;
 
   if (!token) {
@@ -96,18 +112,15 @@ export async function middleware(request: NextRequest) {
   const payload = await verifyJwt(token);
 
   if (!payload) {
-    // Clear the invalid token
     const response = NextResponse.redirect(new URL("/login", request.url));
     response.cookies.delete("authToken");
     return response;
   }
 
-  // Check admin paths for page routes
   if (adminPaths.some((p) => path.startsWith(p)) && payload.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Check user paths for page routes
   if (userPaths.some((p) => path.startsWith(p)) && payload.role !== "USER") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -115,18 +128,9 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Configure which paths should be processed by this middleware
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * 1. _next/static (static files)
-     * 2. _next/image (image optimization files)
-     * 3. _next/data (Next.js data fetch)
-     * 4. favicon.ico (favicon file)
-     */
     "/((?!_next/static|_next/image|_next/data|favicon.ico).*)",
-    // Also handle API routes
     "/api/:path*",
   ],
 };

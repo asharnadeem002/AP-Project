@@ -30,7 +30,6 @@ export function Sidebar() {
 
   const isAdmin = user?.role === "ADMIN";
 
-  // Define navigation items based on user role
   const userNavItems: SidebarItem[] = [
     {
       name: "Dashboard",
@@ -40,18 +39,28 @@ export function Sidebar() {
     {
       name: "Blog",
       href: "/blog",
-      icon: (props: React.ComponentProps<"svg">) => <DocumentTextIcon {...props} />,
+      icon: (props: React.ComponentProps<"svg">) => (
+        <DocumentTextIcon {...props} />
+      ),
     },
-    {
-      name: "Gallery",
-      href: "/dashboard/user/gallery",
-      icon: (props: React.ComponentProps<"svg">) => <PhotoIcon {...props} />,
-    },
-    {
-      name: "Favorites",
-      href: "/dashboard/user/gallery/favorites",
-      icon: (props: React.ComponentProps<"svg">) => <StarIcon {...props} />,
-    },
+    ...(user?.role === "USER"
+      ? [
+          {
+            name: "Gallery",
+            href: "/dashboard/user/gallery",
+            icon: (props: React.ComponentProps<"svg">) => (
+              <PhotoIcon {...props} />
+            ),
+          },
+          {
+            name: "Favorites",
+            href: "/dashboard/user/gallery/favorites",
+            icon: (props: React.ComponentProps<"svg">) => (
+              <StarIcon {...props} />
+            ),
+          },
+        ]
+      : []),
     {
       name: "Subscription",
       href: "/subscription",
@@ -77,7 +86,9 @@ export function Sidebar() {
     {
       name: "Blog",
       href: "/dashboard/admin/blog",
-      icon: (props: React.ComponentProps<"svg">) => <PencilSquareIcon {...props} />,
+      icon: (props: React.ComponentProps<"svg">) => (
+        <PencilSquareIcon {...props} />
+      ),
     },
     {
       name: "Users",
@@ -114,22 +125,20 @@ export function Sidebar() {
 
   const navItems = isAdmin ? adminNavItems : userNavItems;
 
-  // Function to check if a path is active
   const isPathActive = (href: string) => {
-    // For exact matches
     if (pathname === href) return true;
-    
-    // Special handling for gallery and its sub-routes
-    if (href === '/dashboard/user/gallery') {
-      return pathname === href || pathname === '/dashboard/user/gallery/favorites';
+
+    if (href === "/dashboard/user/gallery") {
+      return (
+        pathname === href || pathname === "/dashboard/user/gallery/favorites"
+      );
     }
-    
-    // For other nested routes, only match if the path starts with the href and the next character is either '/' or the end of the string
+
     if (pathname?.startsWith(href)) {
       const nextChar = pathname[href.length];
-      return nextChar === '/' || nextChar === undefined;
+      return nextChar === "/" || nextChar === undefined;
     }
-    
+
     return false;
   };
 
@@ -189,13 +198,15 @@ export function Sidebar() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               {user.profilePicture ? (
-                <Image
-                  className="rounded-full"
-                  src={user.profilePicture}
-                  alt={user.username}
-                  width={32}
-                  height={32}
-                />
+                <div className="relative w-10 h-10">
+                  <Image
+                    className="rounded-full object-cover"
+                    src={user.profilePicture}
+                    alt={user.username}
+                    fill
+                    sizes="32px"
+                  />
+                </div>
               ) : (
                 <div className="h-8 w-8 rounded-full bg-slate-600 flex items-center justify-center">
                   <span className="text-sm font-medium text-white">

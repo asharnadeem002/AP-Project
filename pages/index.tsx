@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { Header } from "../app/components/shared/Header";
 import { Button } from "../app/components/shared/Button";
 import { GetStaticProps } from "next";
+import { useRouter } from "next/router";
+import { useAuth } from "../app/lib/AuthContext";
 import {
   VideoCameraIcon,
   ClockIcon,
@@ -67,14 +69,12 @@ const pricingPlans = [
   },
 ];
 
-// Use getStaticProps for Static Site Generation with ISR
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       pricingPlans,
     },
-    // Enable Incremental Static Regeneration with a revalidation period
-    revalidate: 60, // seconds
+    revalidate: 60,
   };
 };
 
@@ -94,6 +94,23 @@ export default function HomePage({
 }: {
   pricingPlans: PricingPlan[];
 }) {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (user.role === "ADMIN") {
+        router.push("/dashboard/admin");
+      } else if (user.role === "USER") {
+        router.push("/dashboard/user");
+      }
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || user) {
+    return null;
+  }
+
   return (
     <>
       <Head>
@@ -107,7 +124,6 @@ export default function HomePage({
       <div className="min-h-screen flex flex-col">
         <Header />
 
-        {/* Hero Section */}
         <section className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-20">
           <div className="container mx-auto px-4 md:px-6 text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
@@ -137,7 +153,6 @@ export default function HomePage({
           </div>
         </section>
 
-        {/* Features Section */}
         <section id="features" className="py-20 bg-white">
           <div className="container mx-auto px-4 md:px-6">
             <div className="text-center mb-16">
@@ -230,7 +245,6 @@ export default function HomePage({
           </div>
         </section>
 
-        {/* How It Works Section */}
         <section id="how-it-works" className="py-20 bg-gray-50">
           <div className="container mx-auto px-4 md:px-6">
             <div className="text-center mb-16">
@@ -278,7 +292,6 @@ export default function HomePage({
           </div>
         </section>
 
-        {/* Pricing Section */}
         <section id="pricing" className="py-20 bg-white">
           <div className="container mx-auto px-4 md:px-6">
             <div className="text-center mb-16">
@@ -346,7 +359,6 @@ export default function HomePage({
           </div>
         </section>
 
-        {/* About Section */}
         <section id="about" className="py-20 bg-gray-50">
           <div className="container mx-auto px-4 md:px-6">
             <div className="max-w-3xl mx-auto text-center">
@@ -374,7 +386,6 @@ export default function HomePage({
           </div>
         </section>
 
-        {/* CTA Section */}
         <section className="py-20 bg-blue-600 text-white">
           <div className="container mx-auto px-4 md:px-6 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -397,7 +408,6 @@ export default function HomePage({
           </div>
         </section>
 
-        {/* Footer */}
         <footer className="py-12 bg-gray-900 text-gray-400">
           <div className="container mx-auto px-4 md:px-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
