@@ -48,25 +48,30 @@ export default async function handler(
       },
     });
 
-    const [fields, files] = await new Promise<[formidable.Fields, formidable.Files]>((resolve, reject) => {
+    // Using the correct type definition for formidable's parse result
+    const [fields, filesObj] = await new Promise<[formidable.Fields<string>, formidable.Files<string>]>((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) reject(err);
         else resolve([fields, files]);
       });
     });
 
-    // --- Robust file extraction ---
-    let file = files.file;
-    if (Array.isArray(file)) file = file[0];
-    if (!file) {
+    // Extract file using the correct formidable typing
+    const fileField = filesObj.file;
+    if (!fileField) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
+    
+    // Handle both single file and array cases
+    const file = Array.isArray(fileField) ? fileField[0] : fileField;
 
-    console.log("FIELDS ARE:",fields)
-    console.log("FILE IS: ",file)
-    const title = fields.title;
-    const description = fields.description;
-    const mediaType = fields.mediaType;
+    console.log("FIELDS ARE:", fields);
+    console.log("FILE IS: ", file);
+    
+    // Safely extract field values
+    const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
+    const description = Array.isArray(fields.description) ? fields.description[0] : fields.description || '';
+    const mediaType = Array.isArray(fields.mediaType) ? fields.mediaType[0] : fields.mediaType;
 
     if (!title || !mediaType) {
       return res.status(400).json({ message: 'Invalid title or media type' });
@@ -76,10 +81,10 @@ export default async function handler(
     const galleryItem = await prisma.galleryItem.create({
       data: {
         userId,
-        title: title[0],
-        description: Array.isArray(description) ? description[0] : description || '',
-        fileUrl: `/uploads/${path.basename((file as formidable.File).filepath)}`,
-        mediaType: mediaType[0] as 'IMAGE' | 'VIDEO',
+        title,
+        description: description || '',
+        fileUrl: `/uploads/${path.basename(file.filepath)}`,
+        mediaType: mediaType as 'IMAGE' | 'VIDEO',
       },
     });
 
@@ -91,4 +96,4 @@ export default async function handler(
     }
     res.status(500).json({ message: 'Internal server error' });
   }
-} 
+}

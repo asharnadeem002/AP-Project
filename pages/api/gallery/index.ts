@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { verifyJwt } from '../../../../app/lib/jwt';
-import prisma from '../../../../app/lib/db';
+import { verifyJwt } from '@/app/lib/jwt';
+import prisma from '@/app/lib/db';
 
 export default async function handler(
   req: NextApiRequest,
