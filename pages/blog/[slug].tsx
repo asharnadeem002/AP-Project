@@ -3,227 +3,194 @@ import Head from "next/head";
 import Link from "next/link";
 import { GetStaticProps, GetStaticPaths } from "next";
 import { Header } from "../../app/components/shared/Header";
-import { parseISO, format } from "date-fns";
+import { format } from "date-fns";
+import { PrismaClient } from "@prisma/client";
 
-// Define blog post type
+const prisma = new PrismaClient();
+
 interface BlogPost {
   slug: string;
   title: string;
   description: string;
-  date: string;
-  author: string;
   content: string;
+  createdAt: string;
+  author: {
+    username: string;
+  };
 }
 
-/**
- * This demonstrates Static Site Generation (SSG) with dynamic routes
- * getStaticPaths defines which paths will be pre-rendered at build time
- */
 export const getStaticPaths: GetStaticPaths = async () => {
-  // In a real app, you'd fetch this from an API or database
-  const posts: BlogPost[] = [
-    {
-      slug: "introducing-snaptrace",
-      title: "Introducing SnapTrace: The Future of Photo Management",
-      description:
-        "Learn about our new platform for managing your photos and videos",
-      date: "2023-12-01",
-      author: "SnapTrace Team",
-      content:
-        "SnapTrace is a revolutionary new platform designed to help you organize, store, and share your photos and videos with unparalleled security and ease. Our platform offers a range of features including smart organization, cloud sync, and mobile access.",
-    },
-    {
-      slug: "photo-management-tips",
-      title: "5 Essential Tips for Managing Your Photo Collection",
-      description:
-        "Practical tips to keep your photos organized and accessible",
-      date: "2023-12-15",
-      author: "Photo Expert",
-      content:
-        "Managing a large photo collection can be challenging, but with these 5 essential tips, you'll be able to keep your memories organized and accessible. 1. Use consistent folder structures. 2. Add metadata to your photos. 3. Regular backups are essential. 4. Implement a tagging system. 5. Use cloud storage for accessibility.",
-    },
-    {
-      slug: "security-best-practices",
-      title: "Security Best Practices for Your Digital Memories",
-      description: "How to keep your photos and videos safe from threats",
-      date: "2024-01-05",
-      author: "Security Specialist",
-      content:
-        "Your digital memories are precious, and keeping them secure should be a priority. This post covers essential security best practices including using strong, unique passwords, enabling two-factor authentication, encrypting sensitive content, and being careful about sharing permissions.",
-    },
-  ];
-
-  // Generate paths from the blog posts
-  const paths = posts.map((post) => ({
-    params: { slug: post.slug },
-  }));
-
-  return {
-    paths,
-    // If a page is requested that doesn't exist yet, Next.js will render a 404 page
-    // If set to 'blocking', Next.js will server-render the page on-demand (ISR)
-    fallback: false,
-  };
-};
-
-/**
- * getStaticProps fetches data needed to render the page with the given params
- * This runs at build time and in the background when fallback is enabled
- */
-export const getStaticProps: GetStaticProps = async ({ params }) => {
-  // In a real app, you'd fetch this post data from an API or database
-  const posts: BlogPost[] = [
-    {
-      slug: "introducing-snaptrace",
-      title: "Introducing SnapTrace: The Future of Photo Management",
-      description:
-        "Learn about our new platform for managing your photos and videos",
-      date: "2023-12-01",
-      author: "SnapTrace Team",
-      content:
-        "SnapTrace is a revolutionary new platform designed to help you organize, store, and share your photos and videos with unparalleled security and ease. Our platform offers a range of features including smart organization, cloud sync, and mobile access.",
-    },
-    {
-      slug: "photo-management-tips",
-      title: "5 Essential Tips for Managing Your Photo Collection",
-      description:
-        "Practical tips to keep your photos organized and accessible",
-      date: "2023-12-15",
-      author: "Photo Expert",
-      content:
-        "Managing a large photo collection can be challenging, but with these 5 essential tips, you'll be able to keep your memories organized and accessible. 1. Use consistent folder structures. 2. Add metadata to your photos. 3. Regular backups are essential. 4. Implement a tagging system. 5. Use cloud storage for accessibility.",
-    },
-    {
-      slug: "security-best-practices",
-      title: "Security Best Practices for Your Digital Memories",
-      description: "How to keep your photos and videos safe from threats",
-      date: "2024-01-05",
-      author: "Security Specialist",
-      content:
-        "Your digital memories are precious, and keeping them secure should be a priority. This post covers essential security best practices including using strong, unique passwords, enabling two-factor authentication, encrypting sensitive content, and being careful about sharing permissions.",
-    },
-  ];
-
-  // Find the post with matching slug
-  const post = posts.find((p) => p.slug === params?.slug);
-
-  // If no matching post is found, return 404
-  if (!post) {
-    return {
-      notFound: true,
-    };
-  }
-
-  // Parse and format the date
-  const date = format(parseISO(post.date), "MMMM dd, yyyy");
-
-  // Get related posts
-  const relatedPosts = posts
-    .filter((p) => p.slug !== post.slug)
-    .slice(0, 2)
-    .map((p) => ({
-      slug: p.slug,
-      title: p.title,
-      description: p.description,
-      date: format(parseISO(p.date), "MMMM dd, yyyy"),
+  try {
+    const posts = await prisma.blogPost.findMany({
+      where: { published: true },
+      select: { slug: true },
+    });
+    
+    const paths = posts.map((post) => ({
+      params: { slug: post.slug },
     }));
 
-  return {
-    props: {
-      post: {
-        ...post,
-        date,
-      },
-      relatedPosts,
-    },
-    // Enable ISR with a revalidation period
-    revalidate: 60 * 60, // Revalidate once per hour
-  };
+    return {
+      paths,
+      fallback: 'blocking', 
+    };
+  } catch (error) {
+    console.error('Error fetching blog posts:', error);
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
 };
 
-interface BlogPageProps {
-  post: BlogPost & { date: string };
-  relatedPosts: Array<{
-    slug: string;
-    title: string;
-    description: string;
-    date: string;
-  }>;
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  try {
+    const post = await prisma.blogPost.findFirst({
+      where: { 
+        slug: String(params?.slug),
+        published: true
+      },
+      select: {
+        slug: true,
+        title: true,
+        description: true,
+        content: true,
+        createdAt: true,
+        author: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+    
+    if (!post) {
+      return { notFound: true };
+    }
+
+    return {
+      props: {
+        post: {
+          ...post,
+          createdAt: format(new Date(post.createdAt), 'MMMM d, yyyy'),
+        },
+      },
+      revalidate: 60 * 60, // Revalidate every hour
+    };
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    return { notFound: true };
+  }
+};
+
+interface BlogPostPageProps {
+  post: BlogPost;
 }
 
-/**
- * The BlogPost page component
- * Uses the data fetched by getStaticProps
- */
-export default function BlogPostPage({ post, relatedPosts }: BlogPageProps) {
+export default function BlogPostPage({ post }: BlogPostPageProps) {
   return (
     <>
       <Head>
-        <title>{post.title} | SnapTrace Blog</title>
+        <title>{`${post.title} | SnapTrace Blog`}</title>
         <meta name="description" content={post.description} />
       </Head>
 
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gray-50">
         <Header />
 
         <main className="flex-grow">
-          <article className="max-w-3xl mx-auto px-4 py-12">
-            <div className="mb-8">
-              <Link href="/blog" className="text-blue-600 hover:underline">
-                ← Back to all posts
-              </Link>
-            </div>
+          {/* Hero Section */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+            <div className="max-w-4xl mx-auto px-4 py-16">
+              <div className="mb-8">
+                <Link 
+                  href="/blog" 
+                  className="inline-flex items-center text-blue-100 hover:text-white transition-colors"
+                >
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Back to all posts
+                </Link>
+              </div>
 
-            <header className="mb-8">
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
                 {post.title}
               </h1>
-              <p className="text-gray-600 mb-2">{post.date}</p>
-              <p className="text-gray-700">By {post.author}</p>
-            </header>
-
-            <div className="prose max-w-none">
-              {post.content.split("\n").map((paragraph, index) => (
-                <p key={index} className="mb-4">
-                  {paragraph}
-                </p>
-              ))}
+              
+              <div className="flex items-center text-blue-100">
+                <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-lg font-semibold">
+                    {post.author.username.charAt(0)}
+                  </span>
+                </div>
+                <div className="ml-3">
+                  <p className="font-medium">By {post.author.username}</p>
+                  <p className="text-sm opacity-80">{post.createdAt}</p>
+                </div>
+              </div>
             </div>
-          </article>
+          </div>
 
-          {relatedPosts.length > 0 && (
-            <div className="max-w-3xl mx-auto px-4 py-12">
-              <h2 className="text-2xl font-bold mb-6">Related Posts</h2>
-              <div className="grid gap-8 md:grid-cols-2">
-                {relatedPosts.map((related) => (
-                  <div
-                    key={related.slug}
-                    className="border rounded-lg overflow-hidden"
-                  >
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold mb-2">
-                        <Link
-                          href={`/blog/${related.slug}`}
-                          className="text-blue-600 hover:underline"
-                        >
-                          {related.title}
-                        </Link>
-                      </h3>
-                      <p className="text-gray-600 text-sm mb-2">
-                        {related.date}
-                      </p>
-                      <p className="text-gray-700">{related.description}</p>
-                    </div>
-                  </div>
+          {/* Article Content */}
+          <article className="max-w-3xl mx-auto px-4 py-12">
+            <div className="bg-white rounded-xl shadow-sm p-6 md:p-8 lg:p-10">
+              <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700">
+                <p className="text-xl text-gray-600 mb-8 font-medium">
+                  {post.description}
+                </p>
+                
+                {post.content.split("\n").map((paragraph, index) => (
+                  <p key={index} className="mb-4">
+                    {paragraph}
+                  </p>
                 ))}
               </div>
             </div>
-          )}
+
+            {/* Share Section */}
+            <div className="mt-8 text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Share this article
+              </h3>
+              <div className="flex justify-center space-x-4">
+                <button className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                </button>
+                <button className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                  </svg>
+                </button>
+                <button className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </article>
         </main>
 
-        <footer className="bg-gray-100 py-8">
+        <footer className="bg-gray-900 text-white py-12">
           <div className="max-w-5xl mx-auto px-4 text-center">
-            <p className="text-gray-600">
+            <div className="mb-4">
+              <h2 className="text-2xl font-bold">SnapTrace</h2>
+              <p className="text-gray-400">Your photos, your memories, your way</p>
+            </div>
+            <p className="text-gray-500">
               &copy; {new Date().getFullYear()} SnapTrace. All rights reserved.
             </p>
           </div>

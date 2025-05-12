@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
+import type { JWTPayload } from "../../../app/lib/jwt";
 
 export default async function handler(
   req: NextApiRequest,
@@ -25,16 +26,18 @@ export default async function handler(
     const token = authHeader.split(" ")[1];
 
     // Verify the token
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
-    if (!payload) {
+    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
+
+    const typedPayload = payload as JWTPayload;
 
     // Get the user's active subscription
     const subscription = await prisma.subscription.findFirst({
       where: {
-        userId: payload.userId,
+        userId: typedPayload.userId,
         OR: [{ status: "ACTIVE" }, { status: "PENDING" }],
       },
       orderBy: {

@@ -50,37 +50,6 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
  * Helper component for showing loader when transitioning between pages
  */
 export const RouteChangeLoading: React.FC = () => {
-  const [isRouteChanging, setIsRouteChanging] = useState(false);
-
-  useEffect(() => {
-    const handleRouteChangeStart = () => {
-      setIsRouteChanging(true);
-    };
-
-    const handleRouteChangeComplete = () => {
-      setIsRouteChanging(false);
-    };
-
-    // In Next.js Pages Router, you would use Router events
-    // Example (comment out in App Router):
-    // import { Router } from 'next/router'
-    // Router.events.on('routeChangeStart', handleRouteChangeStart);
-    // Router.events.on('routeChangeComplete', handleRouteChangeComplete);
-    // Router.events.on('routeChangeError', handleRouteChangeComplete);
-
-    // In Next.js App Router, you would use a different approach
-    // Since this can vary based on implementation, we'll provide a
-    // placeholder that can be customized
-
-    return () => {
-      // Router.events.off('routeChangeStart', handleRouteChangeStart);
-      // Router.events.off('routeChangeComplete', handleRouteChangeComplete);
-      // Router.events.off('routeChangeError', handleRouteChangeComplete);
-    };
-  }, []);
-
-  if (!isRouteChanging) return null;
-
   return (
     <div className="fixed inset-0 bg-white/80 dark:bg-gray-900/80 z-50 flex items-center justify-center">
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex flex-col items-center">

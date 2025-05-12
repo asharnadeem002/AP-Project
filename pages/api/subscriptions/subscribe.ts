@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
+import type { JWTPayload } from "../../../app/lib/jwt";
 
 // Validation schema
 const subscriptionSchema = z.object({
@@ -32,11 +33,13 @@ export default async function handler(
     const token = authHeader.split(" ")[1];
 
     // Verify the token
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
-    if (!payload) {
+    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
+
+    const typedPayload = payload as JWTPayload;
 
     // Validate request body
     const validatedData = subscriptionSchema.parse(req.body);
@@ -44,7 +47,7 @@ export default async function handler(
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: {
-        id: payload.userId,
+        id: typedPayload.userId,
       },
     });
 
@@ -57,7 +60,7 @@ export default async function handler(
     // Check if the user already has an active subscription
     const existingSubscription = await prisma.subscription.findFirst({
       where: {
-        userId: payload.userId,
+        userId: typedPayload.userId,
         status: "ACTIVE",
       },
     });
@@ -92,7 +95,7 @@ export default async function handler(
     // Create new subscription
     const newSubscription = await prisma.subscription.create({
       data: {
-        userId: payload.userId,
+        userId: typedPayload.userId,
         plan: validatedData.plan,
         status: "ACTIVE",
         paymentMethod: validatedData.paymentMethod,

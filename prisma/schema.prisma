@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -62,11 +61,15 @@ model User {
   isVerified        Boolean        @default(false)
   isApproved        Boolean        @default(false)
   role              Role           @default(USER)
+  notifications     Json?          // Store notification preferences as JSON
+  deletionRequested Boolean        @default(false)
+  deletionRequestedAt DateTime?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   tokens            Token[]
   subscriptions     Subscription[]
   galleryItems      GalleryItem[]
+  blogPosts         BlogPost[]     // Add relation to blog posts
 }
 
 // Token model for verification, password reset, and login
@@ -113,4 +116,20 @@ model GalleryItem {
   updatedAt   DateTime  @updatedAt
 
   @@index([userId])
+}
+
+// Blog Post model
+model BlogPost {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  content     String   @db.Text
+  slug        String   @unique
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
 }

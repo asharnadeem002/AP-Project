@@ -9,9 +9,10 @@ export interface InputProps
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, id, error, ...props }, ref) => {
     return (
-      <div className="w-full max-w-md mb-4">
+      <div className="mb-4">
         <div className="form-floating">
           <input
+            style={{ width: "133%" }}
             className={`input-field ${
               error ? "border-red-500" : ""
             } ${className}`}

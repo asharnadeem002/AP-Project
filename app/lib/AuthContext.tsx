@@ -7,7 +7,6 @@ import {
 } from "react";
 import axios from "axios";
 
-// Define the User type based on your Prisma schema
 export type User = {
   id: string;
   email: string;
@@ -22,7 +21,6 @@ export type User = {
   updatedAt: Date;
 };
 
-// Signup input type
 interface SignupData {
   email: string;
   password: string;
@@ -31,7 +29,6 @@ interface SignupData {
   gender?: string;
 }
 
-// Update profile input type
 interface UpdateProfileData {
   username?: string;
   phoneNumber?: string;
@@ -39,7 +36,6 @@ interface UpdateProfileData {
   profilePicture?: string;
 }
 
-// Define the Auth context type
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
@@ -77,6 +73,9 @@ type AuthContextType = {
   updateProfile: (
     data: UpdateProfileData
   ) => Promise<{ success: boolean; message: string }>;
+  uploadProfilePicture: (
+    file: File
+  ) => Promise<{ success: boolean; message: string; profilePicture?: string }>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -89,7 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const token = localStorage.getItem("authToken");
 
-      if (token) {
+        if (!token) {
+          setIsLoading(false);
+          return;
+        }
+
         const response = await axios.get("/api/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -100,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(response.data.user);
         }
       }
-    } catch (error: unknown) {
+     catch (error: unknown) {
       localStorage.removeItem("authToken");
       console.error("Auth check error:", error);
     } finally {
@@ -128,13 +131,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: "Unexpected login error" };
     }
   };
+
   const verifyLogin = async (email: string, token: string) => {
     try {
       const response = await axios.post("/api/auth/verify-login", {
         email,
         token,
       });
-      console.log("Response after verification: ", response.data);
 
       if (response.data.success && response.data.token) {
         localStorage.setItem("authToken", response.data.token);
@@ -230,6 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await axios.post("/api/auth/reset-password", {
         token,
         password: newPassword,
+        confirmPassword: newPassword,
       });
       return response.data;
     } catch (error: unknown) {
@@ -243,18 +247,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: "Unexpected error" };
     }
   };
-  const logout = async () => {
-    // Clear client-side storage
-    localStorage.removeItem("authToken");
 
-    // Clear the server-side cookie
+  const logout = async () => {
     try {
       await axios.post("/api/auth/logout");
+      localStorage.removeItem("authToken");
+      setUser(null);
     } catch (error) {
       console.error("Logout error:", error);
     }
-
-    setUser(null);
   };
 
   const updateProfile = async (data: UpdateProfileData) => {
@@ -290,6 +291,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const uploadProfilePicture = async (file: File) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return { success: false, message: "Not authenticated" };
+      }
+
+      const formData = new FormData();
+      formData.append("profilePicture", file);
+
+      const response = await axios.post(
+        "/api/users/upload-profile-picture",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setUser((prevUser) => {
+          if (!prevUser) return null;
+          return { ...prevUser, profilePicture: response.data.profilePicture };
+        });
+      }
+
+      return response.data;
+    } catch (error: unknown) {
+      console.error("Profile picture upload error:", error);
+      if (axios.isAxiosError(error)) {
+        return {
+          success: false,
+          message: error.response?.data?.message || "Upload failed",
+        };
+      }
+      return { success: false, message: "Unexpected error" };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -304,6 +346,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resetPassword,
         logout,
         updateProfile,
+        uploadProfilePicture,
       }}
     >
       {children}

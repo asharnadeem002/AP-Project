@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
+import { Prisma } from "@prisma/client";
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,9 +23,9 @@ export default async function handler(
     }
 
     const token = authHeader.split(" ")[1];
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
-    if (!payload) {
+    if (!payload || typeof payload !== 'object' || !('role' in payload)) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
@@ -44,7 +45,7 @@ export default async function handler(
     const role = req.query.role as string | undefined;
 
     // Build query filter
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
 
     if (search) {
       where.OR = [

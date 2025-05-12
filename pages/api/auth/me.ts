@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
+import type { JWTPayload } from "../../../app/lib/jwt";
 
 export default async function handler(
   req: NextApiRequest,
@@ -21,17 +22,18 @@ export default async function handler(
 
     const token = authHeader.split(" ")[1];
     
-    // Add await here since verifyJwt is now async
     const payload = await verifyJwt(token);
 
-    if (!payload) {
+    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
+
+    const typedPayload = payload as JWTPayload;
 
     // Fix the Prisma query syntax
     const user = await prisma.user.findUnique({
       where: {
-        id: payload.userId
+        id: typedPayload.userId
       },
       select: {
         id: true,

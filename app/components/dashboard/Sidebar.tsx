@@ -13,6 +13,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChartBarIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../lib/AuthContext";
 
@@ -35,6 +36,11 @@ export function Sidebar() {
       name: "Dashboard",
       href: "/dashboard/user",
       icon: (props: React.ComponentProps<"svg">) => <HomeIcon {...props} />,
+    },
+    {
+      name: "Blog",
+      href: "/blog",
+      icon: (props: React.ComponentProps<"svg">) => <DocumentTextIcon {...props} />,
     },
     {
       name: "Gallery",
@@ -67,6 +73,11 @@ export function Sidebar() {
       name: "Dashboard",
       href: "/dashboard/admin",
       icon: (props: React.ComponentProps<"svg">) => <HomeIcon {...props} />,
+    },
+    {
+      name: "Blog",
+      href: "/dashboard/admin/blog",
+      icon: (props: React.ComponentProps<"svg">) => <PencilSquareIcon {...props} />,
     },
     {
       name: "Users",
@@ -161,7 +172,7 @@ export function Sidebar() {
             <div className="flex-shrink-0">
               {user.profilePicture ? (
                 <Image
-                  className="h-8 w-8 rounded-full"
+                  className="rounded-full"
                   src={user.profilePicture}
                   alt={user.username}
                   width={32}

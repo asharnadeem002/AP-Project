@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyJwt } from "./jwt";
+import { JWTPayload as JoseJWTPayload } from "jose";
 
 // Types
 export type MiddlewareConfig = {
@@ -8,6 +9,11 @@ export type MiddlewareConfig = {
 
 interface ApiError extends Error {
   status?: number;
+}
+
+interface CustomJWTPayload extends JoseJWTPayload {
+  userId: string;
+  role: "USER" | "ADMIN";
 }
 
 // API route handler middleware
@@ -31,7 +37,7 @@ export async function withAuth(
     const token = authHeader.split(" ")[1];
 
     // Verify the token
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
     if (!payload) {
       return new Response(
@@ -40,8 +46,10 @@ export async function withAuth(
       );
     }
 
+    const customPayload = payload as CustomJWTPayload;
+
     // Check role if required
-    if (config.requiredRole && payload.role !== config.requiredRole) {
+    if (config.requiredRole && customPayload.role !== config.requiredRole) {
       return new Response(
         JSON.stringify({ success: false, message: "Insufficient permissions" }),
         { status: 403, headers: { "Content-Type": "application/json" } }
@@ -49,7 +57,7 @@ export async function withAuth(
     }
 
     // Call the handler with the authenticated user's ID and role
-    return handler(req, payload.userId, payload.role);
+    return handler(req, customPayload.userId, customPayload.role);
   } catch (error) {
     console.error("Auth middleware error:", error);
     return new Response(
@@ -73,7 +81,7 @@ export function handleApiError(error: ApiError) {
 }
 
 // Middleware for NextJS app router navigation
-export function authMiddleware(request: NextRequest) {
+export async function authMiddleware(request: NextRequest) {
   const publicPaths = [
     "/",
     "/login",
@@ -94,6 +102,9 @@ export function authMiddleware(request: NextRequest) {
     "/dashboard/admin/subscriptions",
     "/dashboard/admin/analytics",
     "/dashboard/admin/settings",
+    "/dashboard/admin/blog",
+    "/dashboard/admin/blog/create",
+    "/dashboard/admin/blog/edit",
   ];
 
   const path = request.nextUrl.pathname;
@@ -119,7 +130,7 @@ export function authMiddleware(request: NextRequest) {
   }
 
   // Verify the token
-  const payload = verifyJwt(token);
+  const payload = await verifyJwt(token);
 
   if (!payload) {
     // Clear the invalid token
@@ -128,10 +139,12 @@ export function authMiddleware(request: NextRequest) {
     return response;
   }
 
+  const customPayload = payload as CustomJWTPayload;
+
   // Check admin routes
   if (
     adminPaths.some((p) => path === p || path.startsWith(p + "/")) &&
-    payload.role !== "ADMIN"
+    customPayload.role !== "ADMIN"
   ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }

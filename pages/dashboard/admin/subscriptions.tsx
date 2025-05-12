@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import axios from "axios";
@@ -48,21 +48,7 @@ export default function ManageSubscriptionsPage() {
   });
   const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login");
-      return;
-    }
-
-    if (!isLoading && user?.role !== "ADMIN") {
-      router.push("/dashboard");
-      return;
-    }
-
-    fetchSubscriptions(1);
-  }, [user, isLoading, router]);
-
-  const fetchSubscriptions = async (page: number) => {
+  const fetchSubscriptions = useCallback(async (page: number) => {
     if (!user) return;
 
     try {
@@ -88,7 +74,21 @@ export default function ManageSubscriptionsPage() {
     } finally {
       setLoadingSubscriptions(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+      return;
+    }
+
+    if (!isLoading && user?.role !== "ADMIN") {
+      router.push("/dashboard");
+      return;
+    }
+
+    fetchSubscriptions(1);
+  }, [user, isLoading, router, fetchSubscriptions]);
 
   const handlePageChange = (page: number) => {
     fetchSubscriptions(page);

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import Image from "next/image";
+import React, { useState, useRef, ChangeEvent } from "react";
 import Head from "next/head";
 import { GetServerSideProps } from "next";
 import { DashboardLayout } from "../app/components/dashboard/DashboardLayout";
@@ -11,12 +12,11 @@ import {
   CardTitle,
 } from "../app/components/shared/Card";
 import { useAuth } from "../app/lib/AuthContext";
-import { verifyJwt } from "../app/lib/jwt";
+import { verifyJwt, JWTPayload } from "../app/lib/jwt";
 import prisma from "../app/lib/db";
 import { LoadingPage } from "../app/components/shared/Loader";
 import { toast } from "react-toastify";
 
-// Type for user profile data
 interface UserProfile {
   id: string;
   email: string;
@@ -34,19 +34,9 @@ interface ProfilePageProps {
   userProfile: UserProfile;
 }
 
-/**
- * Server-Side Rendering (SSR) for the profile page
- * Benefits of using getServerSideProps here:
- * 1. Always has up-to-date user data on each request
- * 2. Protects private user data since it loads server-side
- * 3. SEO isn't important for a private profile page
- * 4. Contains user-specific information that shouldn't be cached
- */
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Get auth token from cookies
   const token = context.req.cookies.authToken;
 
-  // If no token, redirect to login
   if (!token) {
     return {
       redirect: {
@@ -57,16 +47,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   try {
-    // Verify token
-    const payload = verifyJwt(token);
+    const payload = await verifyJwt(token);
 
-    if (!payload || !payload.userId) {
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
       throw new Error("Invalid token");
     }
 
-    // Get user data from database
+    const typedPayload = payload as JWTPayload;
+
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: typedPayload.userId },
       select: {
         id: true,
         email: true,
@@ -96,7 +86,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   } catch (error) {
     console.error("Profile page error:", error);
 
-    // If token verification fails, redirect to login
     return {
       redirect: {
         destination: "/login",
@@ -108,25 +97,61 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 };
 
-/**
- * The Profile page component
- * This page is server-side rendered with the user's profile data
- */
 export default function ProfilePage({ userProfile }: ProfilePageProps) {
-  const { user, updateProfile, isLoading } = useAuth();
+  const { updateProfile, uploadProfilePicture, isLoading } = useAuth();
   const [formData, setFormData] = useState({
     username: userProfile.username,
     phoneNumber: userProfile.phoneNumber || "",
     gender: userProfile.gender || "",
   });
+  const [profileImg, setProfileImg] = useState<string>(
+    userProfile.profilePicture || ""
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size should be less than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const result = await uploadProfilePicture(file);
+      if (result.success && result.profilePicture) {
+        setProfileImg(result.profilePicture);
+        toast.success("Profile picture uploaded successfully");
+      } else {
+        toast.error(result.message || "Failed to upload profile picture");
+      }
+    } catch (error) {
+      console.error("Profile picture upload error:", error);
+      toast.error("An error occurred while uploading your profile picture");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -179,6 +204,86 @@ export default function ProfilePage({ userProfile }: ProfilePageProps) {
                 <CardTitle>Account Information</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="mb-6 flex flex-col items-center">
+                  <div className="relative w-24 h-24 mb-3">
+                    <div className="w-full h-full rounded-full overflow-hidden border-2 border-gray-300 bg-gray-200 flex items-center justify-center">
+                      {profileImg ? (
+                        <Image
+                          src={profileImg}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                          width={96}
+                          height={96}
+                        />
+                      ) : (
+                        <svg
+                          className="w-12 h-12 text-gray-500"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="absolute bottom-0 right-0 bg-blue-600 text-white p-1 rounded-full hover:bg-blue-700 focus:outline-none"
+                      onClick={triggerFileInput}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? (
+                        <svg
+                          className="animate-spin h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                      ) : (
+                        <svg
+                          className="h-5 w-5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Click the camera icon to change your profile picture
+                  </p>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <Input
                     label="Email"
@@ -211,7 +316,7 @@ export default function ProfilePage({ userProfile }: ProfilePageProps) {
                   <div className="mb-4">
                     <label
                       htmlFor="gender"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      className="block text-sm font-medium text-white mb-1"
                     >
                       Gender
                     </label>
@@ -222,7 +327,7 @@ export default function ProfilePage({ userProfile }: ProfilePageProps) {
                       onChange={(e) =>
                         setFormData({ ...formData, gender: e.target.value })
                       }
-                      className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full bg-gray-700 p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Prefer not to say</option>
                       <option value="male">Male</option>

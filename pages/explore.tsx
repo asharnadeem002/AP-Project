@@ -6,6 +6,7 @@ import { Button } from "../app/components/shared/Button";
 import { DashboardLayout } from "../app/components/dashboard/DashboardLayout";
 import { Loader } from "../app/components/shared/Loader";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 // Types
 interface Tag {
@@ -322,10 +323,11 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
                         className="overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-gray-800"
                       >
                         <div className="relative pb-[66.666%]">
-                          <img
+                          <Image
                             src={photo.thumbnail}
                             alt={photo.title}
-                            className="absolute h-full w-full object-cover"
+                            fill
+                            className="object-cover"
                           />
                         </div>
                         <div className="p-4">

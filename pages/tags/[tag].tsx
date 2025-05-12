@@ -1,6 +1,7 @@
 import React from "react";
 import Head from "next/head";
 import Link from "next/link";
+import Image from "next/image";
 import { GetStaticProps, GetStaticPaths } from "next";
 import { Header } from "../../app/components/shared/Header";
 import { useRouter } from "next/router";
@@ -162,10 +163,11 @@ export default function TagPage({ tag, photos }: TagPageProps) {
                   className="overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow"
                 >
                   <div className="relative pb-[66.666%]">
-                    <img
+                    <Image
                       src={photo.thumbnail}
                       alt={photo.title}
-                      className="absolute h-full w-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   </div>
                   <div className="p-4">
