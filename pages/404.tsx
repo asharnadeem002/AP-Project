@@ -23,7 +23,8 @@ export default function Custom404() {
             Page Not Found
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-8">
-            The page you&apos;re looking for doesn&apos;t exist or has been moved.
+            The page you&apos;re looking for doesn&apos;t exist or has been
+            moved.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -31,7 +32,7 @@ export default function Custom404() {
               <Button size="lg">Return Home</Button>
             </Link>
             <Button
-              variant="outline"
+              variant="notFound"
               size="lg"
               onClick={() => window.history.back()}
             >
