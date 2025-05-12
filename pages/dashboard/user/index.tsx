@@ -267,7 +267,7 @@ export default function UserDashboardPage({
           <div className="flex justify-center">
             <button
               className="px-5 py-3 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
-              onClick={() => (window.location.href = "/gallery/upload")}
+              onClick={() => (window.location.href = "user/gallery")}
             >
               Upload New Photos
             </button>

@@ -53,7 +53,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
 
     const typedPayload = payload as JWTPayload;
-    const userId = typedPayload.userId;
 
     const user = await prisma.user.findUnique({
       where: { id: typedPayload.userId },
@@ -62,6 +61,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         email: true,
         username: true,
         role: true,
+        notifications: true,
       },
     });
 
@@ -77,40 +77,17 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
     let notifications = defaultNotifications;
 
-    const rawResult = (await prisma.$queryRaw`
-      SELECT notifications FROM User WHERE id = ${userId}
-    `) as Array<{ notifications: unknown }>;
-
-    if (rawResult?.[0]?.notifications) {
+    if (user.notifications) {
       try {
-        const rawData = rawResult[0].notifications;
-        let parsedData;
+        const parsedData = typeof user.notifications === 'string' 
+          ? JSON.parse(user.notifications) 
+          : user.notifications;
 
-        if (typeof rawData === "string") {
-          try {
-            parsedData = JSON.parse(rawData);
-          } catch (e) {
-            console.error("Failed to parse notifications string:", e);
-            parsedData = null;
-          }
-        } else {
-          parsedData = rawData;
-        }
-
-        if (parsedData && typeof parsedData === "object") {
+        if (parsedData && typeof parsedData === 'object') {
           notifications = {
-            emailNotifications: Boolean(
-              parsedData.emailNotifications ??
-                defaultNotifications.emailNotifications
-            ),
-            smsNotifications: Boolean(
-              parsedData.smsNotifications ??
-                defaultNotifications.smsNotifications
-            ),
-            appNotifications: Boolean(
-              parsedData.appNotifications ??
-                defaultNotifications.appNotifications
-            ),
+            emailNotifications: Boolean(parsedData.emailNotifications ?? defaultNotifications.emailNotifications),
+            smsNotifications: Boolean(parsedData.smsNotifications ?? defaultNotifications.smsNotifications),
+            appNotifications: Boolean(parsedData.appNotifications ?? defaultNotifications.appNotifications),
           };
         }
       } catch (e) {
@@ -131,7 +108,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   } catch (error) {
     console.error("User settings page error:", error);
-
     return {
       redirect: {
         destination: "/login",
@@ -155,6 +131,21 @@ export default function UserSettingsPage({ userData }: SettingsPageProps) {
   const [notifications, setNotifications] = useState<NotificationSettings>(
     userData.notifications
   );
+
+  // Add a timeout to prevent infinite loading
+  React.useEffect(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        console.error('Loading timeout reached');
+      }, 5000); // 5 seconds timeout
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
+  // If we have userData but still loading, show the content anyway
+  if (isLoading && !userData) {
+    return <LoadingPage message="Loading settings..." />;
+  }
 
   const validatePassword = () => {
     if (!currentPassword) {
@@ -286,10 +277,6 @@ export default function UserSettingsPage({ userData }: SettingsPageProps) {
       toast.error("An error occurred. Please try again.");
     }
   };
-
-  if (isLoading) {
-    return <LoadingPage message="Loading settings..." />;
-  }
 
   return (
     <>

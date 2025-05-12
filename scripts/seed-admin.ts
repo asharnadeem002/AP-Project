@@ -7,14 +7,17 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import path from "path";
+import { fileURLToPath } from 'url';
 
 // Load environment variables
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 // Admin users to be seeded
 const ADMIN_USERS = [
   {
-    email: "admin@snaptrace.com",
+    email: "l217748@lhr.nu.edu.pk",
     username: "admin",
     password: "Admin@123",
     phoneNumber: "+1234567890",

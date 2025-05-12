@@ -49,7 +49,7 @@ export function Sidebar() {
     },
     {
       name: "Favorites",
-      href: "/gallery/favorites",
+      href: "/dashboard/user/gallery/favorites",
       icon: (props: React.ComponentProps<"svg">) => <StarIcon {...props} />,
     },
     {
@@ -61,7 +61,7 @@ export function Sidebar() {
     },
     {
       name: "Settings",
-      href: "/settings",
+      href: "/dashboard/user/settings",
       icon: (props: React.ComponentProps<"svg">) => (
         <Cog6ToothIcon {...props} />
       ),
@@ -114,6 +114,25 @@ export function Sidebar() {
 
   const navItems = isAdmin ? adminNavItems : userNavItems;
 
+  // Function to check if a path is active
+  const isPathActive = (href: string) => {
+    // For exact matches
+    if (pathname === href) return true;
+    
+    // Special handling for gallery and its sub-routes
+    if (href === '/dashboard/user/gallery') {
+      return pathname === href || pathname === '/dashboard/user/gallery/favorites';
+    }
+    
+    // For other nested routes, only match if the path starts with the href and the next character is either '/' or the end of the string
+    if (pathname?.startsWith(href)) {
+      const nextChar = pathname[href.length];
+      return nextChar === '/' || nextChar === undefined;
+    }
+    
+    return false;
+  };
+
   return (
     <div
       className={`bg-slate-800 text-white flex flex-col h-screen ${
@@ -141,8 +160,7 @@ export function Sidebar() {
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-2 px-2">
           {navItems.map((item) => {
-            const isActive =
-              pathname === item.href || pathname?.startsWith(`${item.href}/`);
+            const isActive = isPathActive(item.href);
             return (
               <li key={item.name}>
                 <Link

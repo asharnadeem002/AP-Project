@@ -41,7 +41,7 @@ export function Header() {
   const navLinks = user
     ? [
         { name: "Dashboard", href: "/dashboard" },
-        { name: "Gallery", href: "/gallery" },
+        { name: "Gallery", href: "/dashboard/user/gallery" },
         { name: "Subscription", href: "/subscription" },
       ]
     : [
