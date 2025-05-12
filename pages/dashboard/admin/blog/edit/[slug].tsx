@@ -81,7 +81,8 @@ export default function EditBlogPost() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update post');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update post');
       }
 
       router.push('/dashboard/admin/blog');
@@ -108,8 +109,17 @@ export default function EditBlogPost() {
             </div>
 
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
+              <div className="mb-6 p-4 rounded-md bg-red-50 border border-red-200">
+                <div className="flex">
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">
+                      Error updating blog post
+                    </h3>
+                    <div className="mt-2 text-sm text-red-700">
+                      {error}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 

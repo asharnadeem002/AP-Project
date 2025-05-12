@@ -7,6 +7,7 @@ import { Button } from "../../../../app/components/shared/Button";
 export default function CreateBlogPost() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -52,6 +53,7 @@ export default function CreateBlogPost() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError('');
 
     try {
       const response = await fetch("/api/admin/blog", {
@@ -64,16 +66,14 @@ export default function CreateBlogPost() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create blog post");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create blog post");
       }
 
       router.push("/dashboard/admin/blog");
     } catch (error) {
       console.error("Error creating blog post:", error);
-      alert(
-        error instanceof Error ? error.message : "Failed to create blog post"
-      );
+      setError(error instanceof Error ? error.message : "Failed to create blog post");
     } finally {
       setIsSubmitting(false);
     }
@@ -97,6 +97,24 @@ export default function CreateBlogPost() {
               Cancel
             </Button>
           </div>
+
+          {error && (
+            <div className="mb-6 p-4 rounded-md bg-red-50 border border-red-200">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  {/* You can add an error icon here if desired */}
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Error creating blog post
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    {error}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
             <div className="bg-white rounded-lg shadow overflow-hidden p-6 space-y-6">

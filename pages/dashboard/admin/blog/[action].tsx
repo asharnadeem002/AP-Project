@@ -100,10 +100,12 @@ export default function BlogPostForm({ post: initialPost, action }: Props) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(post),
+        credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save the post');
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${action} blog post`);
       }
 
       router.push('/dashboard/admin/blog');
@@ -111,7 +113,7 @@ export default function BlogPostForm({ post: initialPost, action }: Props) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('An unexpected error occurred');
+        setError(`An unexpected error occurred while ${action === 'create' ? 'creating' : 'updating'} the post`);
       }
     } finally {
       setIsSubmitting(false);
@@ -135,8 +137,17 @@ export default function BlogPostForm({ post: initialPost, action }: Props) {
             </div>
 
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
+              <div className="mb-6 p-4 rounded-md bg-red-50 border border-red-200">
+                <div className="flex">
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">
+                      Error {action === 'create' ? 'creating' : 'updating'} blog post
+                    </h3>
+                    <div className="mt-2 text-sm text-red-700">
+                      {error}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
