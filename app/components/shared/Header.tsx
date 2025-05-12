@@ -44,7 +44,10 @@ export function Header() {
         ...(user.role === "USER"
           ? [{ name: "Gallery", href: "/dashboard/user/gallery" }]
           : []),
-        { name: "Subscription", href: "/subscription" },
+        ...(user.role === "USER"
+          ? [{ name: "Subscription", href: "/subscription" }]
+          : []),
+        // { name: "Subscription", href: "/subscription" },
       ]
     : [
         { name: "Home", href: "/" },
