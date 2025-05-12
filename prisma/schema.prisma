@@ -60,6 +60,10 @@ model User {
   profilePicture    String?
   isVerified        Boolean        @default(false)
   isApproved        Boolean        @default(false)
+  isActive          Boolean        @default(true)
+  reactivationRequested Boolean    @default(false)
+  deactivationReason String?       // Reason for deactivation
+  reactivationRequestedAt DateTime?
   role              Role           @default(USER)
   notifications     Json?          // Store notification preferences as JSON
   deletionRequested Boolean        @default(false)
@@ -87,17 +91,18 @@ model Token {
 
 // Subscription model
 model Subscription {
-  id            String             @id @default(uuid())
-  userId        String
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan          SubscriptionPlan
-  status        SubscriptionStatus @default(PENDING)
-  paymentMethod PaymentMethod
-  startDate     DateTime?
-  endDate       DateTime?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  paymentId     String?            // For payment reference from external services
+  id             String             @id @default(uuid())
+  userId         String
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan           SubscriptionPlan
+  status         SubscriptionStatus @default(PENDING)
+  paymentMethod  PaymentMethod
+  startDate      DateTime?
+  endDate        DateTime?
+  rejectionReason String?           // Reason for rejecting the subscription
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  paymentId      String?            // For payment reference from external services
 
   @@index([userId])
 }

@@ -28,6 +28,7 @@ interface User {
   isVerified: boolean;
   isApproved: boolean;
   createdAt: string;
+  isActive?: boolean;
 }
 
 interface UsersPageProps {
@@ -59,7 +60,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   try {
     const payload = await verifyJwt(token);
 
-    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
       throw new Error("Invalid token");
     }
 
@@ -113,16 +114,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       where,
       skip,
       take: limit,
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        phoneNumber: true,
-        role: true,
-        isVerified: true,
-        isApproved: true,
-        createdAt: true,
-      },
       orderBy: {
         createdAt: "desc",
       },
@@ -130,8 +121,15 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
     // Format users for the client
     const formattedUsers = users.map((user) => ({
-      ...user,
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      isVerified: user.isVerified,
+      isApproved: user.isApproved,
       createdAt: user.createdAt.toISOString(),
+      isActive: user.isActive ?? true, // Use nullish coalescing for backward compatibility
     }));
 
     // Calculate total pages
@@ -171,6 +169,9 @@ export default function UsersPage({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [deactivationReason, setDeactivationReason] = useState("");
 
   useEffect(() => {
     // Client-side auth check as a backup
@@ -247,6 +248,95 @@ export default function UsersPage({
     } catch (error) {
       console.error("Approve user error:", error);
       toast.error("An error occurred while approving the user");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const openDeactivateModal = (user: User) => {
+    if (user.role === "ADMIN") return; // Extra safety check
+    setSelectedUser(user);
+    setDeactivationReason("");
+    setShowDeactivateModal(true);
+  };
+
+  const closeDeactivateModal = () => {
+    setShowDeactivateModal(false);
+    setSelectedUser(null);
+    setDeactivationReason("");
+  };
+
+  const handleDeactivateUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setIsRefreshing(true);
+
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("/api/admin/deactivate-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          deactivationReason,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("User deactivated successfully");
+
+        // Update the local user list
+        setUsers(
+          users.map((u) =>
+            u.id === selectedUser.id ? { ...u, isActive: false } : u
+          )
+        );
+        closeDeactivateModal();
+      } else {
+        toast.error(result.message || "Failed to deactivate user");
+      }
+    } catch (error) {
+      console.error("Deactivate user error:", error);
+      toast.error("An error occurred while deactivating the user");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleReactivateUser = async (userId: string) => {
+    try {
+      setIsRefreshing(true);
+
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("/api/admin/reactivate-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("User reactivated successfully");
+
+        // Update the local user list
+        setUsers(
+          users.map((u) => (u.id === userId ? { ...u, isActive: true } : u))
+        );
+      } else {
+        toast.error(result.message || "Failed to reactivate user");
+      }
+    } catch (error) {
+      console.error("Reactivate user error:", error);
+      toast.error("An error occurred while reactivating the user");
     } finally {
       setIsRefreshing(false);
     }
@@ -384,16 +474,45 @@ export default function UsersPage({
                         <td className="px-4 py-3">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-3">
-                          {!user.isApproved && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleApproveUser(user.id)}
-                              disabled={isRefreshing}
-                            >
-                              Approve
-                            </Button>
-                          )}
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex justify-end space-x-2">
+                            {!user.isApproved && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleApproveUser(user.id)}
+                                isLoading={isRefreshing}
+                                disabled={isRefreshing}
+                              >
+                                Approve
+                              </Button>
+                            )}
+                            {user.isActive ? (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => openDeactivateModal(user)}
+                                disabled={isRefreshing || user.role === "ADMIN"}
+                                title={
+                                  user.role === "ADMIN"
+                                    ? "Cannot deactivate admin users"
+                                    : ""
+                                }
+                              >
+                                Deactivate
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleReactivateUser(user.id)}
+                                isLoading={isRefreshing}
+                                disabled={isRefreshing}
+                              >
+                                Reactivate
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -446,6 +565,50 @@ export default function UsersPage({
           </Card>
         </div>
       </DashboardLayout>
+
+      {showDeactivateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">
+              Deactivate User Account
+            </h3>
+            <p className="mb-4">
+              Are you sure you want to deactivate the account for user{" "}
+              {selectedUser?.username}? The user will not be able to log in
+              until reactivated.
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Reason for deactivation (optional):
+              </label>
+              <textarea
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-slate-700"
+                rows={3}
+                value={deactivationReason}
+                onChange={(e) => setDeactivationReason(e.target.value)}
+                placeholder="Provide a reason for deactivation (will be shared with the user)"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={closeDeactivateModal}
+                disabled={isRefreshing}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeactivateUser}
+                isLoading={isRefreshing}
+                disabled={isRefreshing}
+              >
+                Deactivate User
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

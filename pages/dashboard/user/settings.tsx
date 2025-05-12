@@ -16,7 +16,6 @@ import prisma from "../../../app/lib/db";
 import { LoadingPage } from "../../../app/components/shared/Loader";
 import { toast } from "react-toastify";
 import { Switch } from "../../../app/components/shared/Switch";
-import { User } from "@prisma/client";
 
 type NotificationSettings = {
   emailNotifications: boolean;
@@ -55,9 +54,17 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
     const typedPayload = payload as JWTPayload;
 
+    // Use a raw query to get all user data
     const user = await prisma.user.findUnique({
       where: { id: typedPayload.userId },
-    }) as (User & { notifications: NotificationSettings | null });
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        role: true,
+        notifications: true,
+      },
+    });
 
     if (!user) {
       throw new Error("User not found");
@@ -69,7 +76,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       appNotifications: true,
     };
 
-    const notifications = user.notifications || defaultNotifications;
+    const notifications =
+      (user.notifications as NotificationSettings) || defaultNotifications;
 
     return {
       props: {
@@ -112,7 +120,7 @@ export default function UserSettingsPage({ userData }: SettingsPageProps) {
   React.useEffect(() => {
     if (isLoading) {
       const timer = setTimeout(() => {
-        console.error('Loading timeout reached');
+        console.error("Loading timeout reached");
       }, 5000); // 5 seconds timeout
       return () => clearTimeout(timer);
     }

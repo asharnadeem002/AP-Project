@@ -102,6 +102,90 @@ const getFallbackTemplate = (templateType: string) => {
           <p style="color: #666; font-size: 14px;">We hope you enjoy all the features of your subscription. If you have any questions, please contact our support team.</p>
         </div>
       `;
+    case "subscriptionApproved":
+      return `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <h2 style="color: #333; text-align: center;">Subscription Approved!</h2>
+          <p style="color: #666; font-size: 16px;">Great news! Your subscription request for the {{plan}} plan has been approved by our admin team.</p>
+          <div style="background-color: #f0f7ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #007bff; text-align: center;">Subscription Details</h3>
+            <p style="margin: 10px 0;"><strong>Plan:</strong> {{plan}}</p>
+            <p style="margin: 10px 0;"><strong>Status:</strong> Active</p>
+            <p style="margin: 10px 0;"><strong>Start Date:</strong> {{startDate}}</p>
+            <p style="margin: 10px 0;"><strong>End Date:</strong> {{endDate}}</p>
+            <p style="margin: 10px 0;"><strong>Payment Method:</strong> {{paymentMethod}}</p>
+          </div>
+          <p style="color: #666; font-size: 16px;">You now have full access to all features included in your subscription plan. Login to your account to start exploring!</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${
+              process.env.NEXTAUTH_URL || "http://localhost:3000"
+            }/dashboard" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Go to Dashboard</a>
+          </div>
+        </div>
+      `;
+    case "subscriptionRejected":
+      return `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <h2 style="color: #333; text-align: center;">Subscription Request Not Approved</h2>
+          <p style="color: #666; font-size: 16px;">We're writing to inform you that your subscription request for the {{plan}} plan was not approved at this time.</p>
+          <div style="background-color: #fee2e2; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #ef4444; text-align: center;">Subscription Details</h3>
+            <p style="margin: 10px 0;">You requested the <strong>{{plan}}</strong> plan on <strong>{{requestDate}}</strong>.</p>
+          </div>
+          {{#if rejectionReason}}
+          <p style="color: #666; font-size: 16px;">The admin provided the following reason:</p>
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="font-style: italic; color: #4b5563;">{{rejectionReason}}</p>
+          </div>
+          {{/if}}
+          <p style="color: #666; font-size: 16px;">You can contact our support team for more information or resubmit your subscription request after addressing any issues mentioned above.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${
+              process.env.NEXTAUTH_URL || "http://localhost:3000"
+            }/subscription" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Subscription Options</a>
+          </div>
+        </div>
+      `;
+    case "accountDeactivated":
+      return `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <h2 style="color: #333; text-align: center;">Account Deactivated</h2>
+          <p style="color: #666; font-size: 16px;">We regret to inform you that your SnapTrace account has been deactivated by an administrator.</p>
+          <div style="background-color: #fee2e2; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #ef4444; text-align: center;">Account Status: Deactivated</h3>
+            <p style="margin: 10px 0;">You will no longer be able to log in to your account until it is reactivated by an administrator.</p>
+          </div>
+          {{#if deactivationReason}}
+          <p style="color: #666; font-size: 16px;">The administrator provided the following reason:</p>
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="font-style: italic; color: #4b5563;">{{deactivationReason}}</p>
+          </div>
+          {{/if}}
+          <p style="color: #666; font-size: 16px;">If you believe this was done in error or would like to request reactivation of your account, please click the button below to submit a reactivation request. Our admin team will review your request.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${
+              process.env.NEXTAUTH_URL || "http://localhost:3000"
+            }/request-reactivation" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Request Reactivation</a>
+          </div>
+        </div>
+      `;
+    case "accountReactivated":
+      return `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <h2 style="color: #333; text-align: center;">Account Reactivated!</h2>
+          <p style="color: #666; font-size: 16px;">Great news! Your SnapTrace account has been reactivated by an administrator.</p>
+          <div style="background-color: #e6f5e6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #22c55e; text-align: center;">Account Status: Active</h3>
+            <p style="margin: 10px 0;">You can now log in to your account and continue using all SnapTrace features.</p>
+          </div>
+          <p style="color: #666; font-size: 16px;">We're glad to have you back on the platform. If you encounter any issues with your account, please don't hesitate to contact our support team.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${
+              process.env.NEXTAUTH_URL || "http://localhost:3000"
+            }/login" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Log In Now</a>
+          </div>
+        </div>
+      `;
     default:
       return `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
@@ -129,7 +213,11 @@ const getEmailContent = (
     | "login"
     | "passwordReset"
     | "accountApproved"
-    | "subscriptionConfirmation",
+    | "subscriptionConfirmation"
+    | "subscriptionApproved"
+    | "subscriptionRejected"
+    | "accountDeactivated"
+    | "accountReactivated",
   context: Record<string, string | number>
 ) => {
   const subjects = {
@@ -140,6 +228,14 @@ const getEmailContent = (
     subscriptionConfirmation: `Your SnapTrace ${
       context.plan || "Premium"
     } Subscription is Confirmed`,
+    subscriptionApproved: `Your SnapTrace ${
+      context.plan || "Premium"
+    } Subscription is Approved`,
+    subscriptionRejected: `Your SnapTrace ${
+      context.plan || "Premium"
+    } Subscription Request Declined`,
+    accountDeactivated: "Your SnapTrace Account Has Been Deactivated",
+    accountReactivated: "Your SnapTrace Account Has Been Reactivated",
   };
 
   return {
@@ -156,7 +252,11 @@ export async function sendEmail(
     | "login"
     | "passwordReset"
     | "accountApproved"
-    | "subscriptionConfirmation",
+    | "subscriptionConfirmation"
+    | "subscriptionApproved"
+    | "subscriptionRejected"
+    | "accountDeactivated"
+    | "accountReactivated",
   context: Record<string, string | number> = {}
 ) {
   try {

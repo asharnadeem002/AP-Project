@@ -1,19 +1,20 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify } from "jose";
 
 export interface JWTPayload {
   userId: string;
-  role: 'USER' | 'ADMIN';
-  [key: string]: unknown;  // Allow additional properties but with unknown type
+  role: "USER" | "ADMIN";
+  isActive?: boolean; // Add isActive field, making it optional for backward compatibility
+  [key: string]: unknown; // Allow additional properties but with unknown type
 }
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function signJwt(payload: JWTPayload) {
   const token = await new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('7d')
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("7d")
     .sign(JWT_SECRET);
-  
+
   return token;
 }
 
