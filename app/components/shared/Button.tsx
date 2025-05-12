@@ -1,7 +1,6 @@
 import React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-// Define button variants using CVA
 const buttonVariants = cva(
   "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
   {
@@ -9,6 +8,8 @@ const buttonVariants = cva(
       variant: {
         default: "bg-blue-600 text-black hover:bg-blue-700 hover:text-white",
         destructive: "bg-red-600 text-black hover:bg-red-700 hover:text-white",
+        notFound:
+          "bg-transparent border border-slate-200 text-white hover:bg-slate-100 hover:text-white dark:border-slate-700 dark:hover:bg-slate-800",
         outline:
           "bg-transparent border border-slate-200 text-black hover:bg-slate-100 hover:text-white dark:border-slate-700 dark:hover:bg-slate-800",
         subtle:
@@ -36,14 +37,12 @@ const buttonVariants = cva(
   }
 );
 
-// Define button props including all HTML button props
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
 }
 
-// Create Button component
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     { className, children, variant, size, fullWidth, isLoading, ...props },
