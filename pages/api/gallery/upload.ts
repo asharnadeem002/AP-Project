@@ -44,11 +44,12 @@ export default async function handler(
       keepExtensions: true,
       maxFileSize: 10 * 1024 * 1024, // 10MB
       filter: ({ mimetype }) => {
-        return mimetype?.startsWith('image/') || mimetype?.startsWith('video/') || false;
+        // Ensure proper MIME type handling
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+        return mimetype ? allowedTypes.includes(mimetype) : false;
       },
     });
 
-    // Using the correct type definition for formidable's parse result
     const [fields, filesObj] = await new Promise<[formidable.Fields<string>, formidable.Files<string>]>((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) reject(err);
@@ -56,19 +57,13 @@ export default async function handler(
       });
     });
 
-    // Extract file using the correct formidable typing
     const fileField = filesObj.file;
     if (!fileField) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
     
-    // Handle both single file and array cases
     const file = Array.isArray(fileField) ? fileField[0] : fileField;
-
-    console.log("FIELDS ARE:", fields);
-    console.log("FILE IS: ", file);
     
-    // Safely extract field values
     const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
     const description = Array.isArray(fields.description) ? fields.description[0] : fields.description || '';
     const mediaType = Array.isArray(fields.mediaType) ? fields.mediaType[0] : fields.mediaType;
@@ -77,13 +72,16 @@ export default async function handler(
       return res.status(400).json({ message: 'Invalid title or media type' });
     }
 
+    // Ensure proper URL path format for the file
+    const fileUrl = `/uploads/${path.basename(file.filepath)}`.replace(/\\/g, '/');
+
     // Create gallery item in database
     const galleryItem = await prisma.galleryItem.create({
       data: {
         userId,
         title,
         description: description || '',
-        fileUrl: `/uploads/${path.basename(file.filepath)}`,
+        fileUrl,
         mediaType: mediaType as 'IMAGE' | 'VIDEO',
       },
     });

@@ -217,36 +217,52 @@ export default function GalleryPage({ initialItems, totalItems }: GalleryPagePro
                 <Card key={item.id}>
                   <CardContent className="p-4">
                     {item.mediaType === 'IMAGE' ? (
-                      <Image
-                        src={item.fileUrl}
-                        alt={item.title}
-                        width={400}
-                        height={300}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
+                      <div className="relative h-48 w-full mb-4 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                        <Image
+                          src={item.fileUrl}
+                          alt={item.title}
+                          width={400}
+                          height={300}
+                          className="max-w-full max-h-full object-contain"
+                          priority={false}
+                          unoptimized
+                          onError={() => {
+                            // Fallback to default image on error
+                            const imgElement = document.querySelector(`[alt="${item.title}"]`) as HTMLImageElement;
+                            if (imgElement) {
+                              imgElement.src = '/file.svg';
+                            }
+                          }}
+                        />
+                      </div>
                     ) : (
                       <video
                         src={item.fileUrl}
                         controls
-                        className="w-full h-48 object-cover rounded-lg"
+                        className="w-full h-48 mb-4 rounded-lg"
                       />
                     )}
-                    <div className="mt-4">
-                      <h3 className="font-semibold">{item.title}</h3>
-                      <p className="text-sm text-gray-500">{item.description}</p>
-                      <div className="mt-2 flex justify-between items-center">
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={item.isFavorite}
-                            onChange={() => handleFavorite(item.id, item.isFavorite)}
-                            className="form-checkbox h-4 w-4 text-blue-600"
-                          />
-                          <span className="text-sm">Favorite</span>
-                        </label>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-lg">{item.title}</h3>
+                      {item.description && (
+                        <p className="text-gray-600 dark:text-gray-300">
+                          {item.description}
+                        </p>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <button
+                          onClick={() => handleFavorite(item.id, item.isFavorite)}
+                          className={`text-sm px-3 py-1 rounded ${
+                            item.isFavorite
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {item.isFavorite ? 'Favorited' : 'Add to Favorites'}
+                        </button>
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-sm px-3 py-1 rounded bg-red-100 text-red-800"
                         >
                           Delete
                         </button>

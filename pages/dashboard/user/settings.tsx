@@ -16,6 +16,7 @@ import prisma from "../../../app/lib/db";
 import { LoadingPage } from "../../../app/components/shared/Loader";
 import { toast } from "react-toastify";
 import { Switch } from "../../../app/components/shared/Switch";
+import { User } from "@prisma/client";
 
 type NotificationSettings = {
   emailNotifications: boolean;
@@ -56,14 +57,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
     const user = await prisma.user.findUnique({
       where: { id: typedPayload.userId },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        role: true,
-        notifications: true,
-      },
-    });
+    }) as (User & { notifications: NotificationSettings | null });
 
     if (!user) {
       throw new Error("User not found");
@@ -75,25 +69,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       appNotifications: true,
     };
 
-    let notifications = defaultNotifications;
-
-    if (user.notifications) {
-      try {
-        const parsedData = typeof user.notifications === 'string' 
-          ? JSON.parse(user.notifications) 
-          : user.notifications;
-
-        if (parsedData && typeof parsedData === 'object') {
-          notifications = {
-            emailNotifications: Boolean(parsedData.emailNotifications ?? defaultNotifications.emailNotifications),
-            smsNotifications: Boolean(parsedData.smsNotifications ?? defaultNotifications.smsNotifications),
-            appNotifications: Boolean(parsedData.appNotifications ?? defaultNotifications.appNotifications),
-          };
-        }
-      } catch (e) {
-        console.error("Error processing notifications:", e);
-      }
-    }
+    const notifications = user.notifications || defaultNotifications;
 
     return {
       props: {
