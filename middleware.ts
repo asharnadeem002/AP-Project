@@ -16,6 +16,8 @@ export async function middleware(request: NextRequest) {
     "/api/auth/logout",
     "/api/auth/forgot-password",
     "/api/auth/reset-password",
+    "/request-reactivation",
+    "/api/users/request-reactivation",
   ];
   const adminPaths = ["/dashboard/admin", "/api/admin"];
   const userPaths = ["/dashboard/user"];
@@ -52,6 +54,7 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/images") ||
     path.startsWith("/api/public") ||
     path.includes(".") ||
+    path === "/request-reactivation" ||
     publicPaths.some((p) => path === p || path.startsWith(p + "/"))
   ) {
     return NextResponse.next();
@@ -80,6 +83,18 @@ export async function middleware(request: NextRequest) {
       return new NextResponse(
         JSON.stringify({ success: false, message: "Invalid token" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if user is deactivated (for non-admin users)
+    if (payload.role !== "ADMIN" && payload.isActive === false) {
+      return new NextResponse(
+        JSON.stringify({
+          success: false,
+          message:
+            "Your account has been deactivated. Please contact support or request reactivation.",
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -115,6 +130,11 @@ export async function middleware(request: NextRequest) {
     const response = NextResponse.redirect(new URL("/login", request.url));
     response.cookies.delete("authToken");
     return response;
+  }
+
+  // Redirect deactivated users to reactivation page
+  if (payload.role !== "ADMIN" && payload.isActive === false) {
+    return NextResponse.redirect(new URL("/request-reactivation", request.url));
   }
 
   if (adminPaths.some((p) => path.startsWith(p)) && payload.role !== "ADMIN") {

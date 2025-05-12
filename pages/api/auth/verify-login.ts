@@ -38,34 +38,60 @@ export default async function handler(
       });
     }
 
-    // Find the token
-    const token = await prisma.token.findFirst({
+    // Validate token
+    const validToken = await prisma.token.findFirst({
       where: {
-        userId: user.id,
         token: validatedData.token,
         type: "LOGIN",
         expiresAt: {
-          gt: new Date(),
+          gte: new Date(),
         },
+        user: {
+          email: validatedData.email,
+        },
+      },
+      include: {
+        user: true,
       },
     });
 
-    if (!token) {
+    if (!validToken) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired verification token",
+        message:
+          "Invalid or expired token. Please request a new login verification code.",
       });
     }
 
-    // Delete the used token
+    // Check if user is active - we need to check if the user has isActive field
+    if (
+      Object.prototype.hasOwnProperty.call(user, "isActive") &&
+      user.isActive === false
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Your account has been deactivated. Please contact support or request reactivation.",
+      });
+    }
+
+    // Delete the token as it's now used
     await prisma.token.delete({
       where: {
-        id: token.id,
+        id: validToken.id,
       },
     });
 
-    // Generate JWT token
-    const jwtToken = await signJwt({ userId: user.id, role: user.role });
+    // Generate JWT token - Include isActive in the payload
+    // If the field doesn't exist in the DB yet, default to true
+    const isActive = Object.prototype.hasOwnProperty.call(user, "isActive")
+      ? user.isActive
+      : true;
+    const jwtToken = await signJwt({
+      userId: user.id,
+      role: user.role,
+      isActive: isActive,
+    });
 
     // Return user data (excluding sensitive fields)
     const userData = {
@@ -78,6 +104,7 @@ export default async function handler(
       role: user.role,
       isVerified: user.isVerified,
       isApproved: user.isApproved,
+      isActive: isActive, // Include in the response
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

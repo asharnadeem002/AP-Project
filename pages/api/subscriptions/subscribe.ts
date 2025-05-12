@@ -3,6 +3,8 @@ import { z } from "zod";
 import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
 import type { JWTPayload } from "../../../app/lib/jwt";
+// Import will be used in a future implementation
+// import { sendEmail } from "../../../app/lib/email";
 
 // Validation schema
 const subscriptionSchema = z.object({
@@ -35,7 +37,7 @@ export default async function handler(
     // Verify the token
     const payload = await verifyJwt(token);
 
-    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
@@ -56,29 +58,43 @@ export default async function handler(
         .status(404)
         .json({ success: false, message: "User not found" });
     }
+    // Check if the user is active
+    if (!user.isApproved) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Your account is currently deactivated. Please request reactivation before subscribing to a plan.",
+      });
+    }
 
-    // Check if the user already has an active subscription
-    const existingSubscription = await prisma.subscription.findFirst({
+    // Check if the user already has an active or pending subscription
+    const existingActiveSubscription = await prisma.subscription.findFirst({
       where: {
         userId: typedPayload.userId,
         status: "ACTIVE",
       },
     });
 
-    if (existingSubscription) {
+    const existingPendingSubscription = await prisma.subscription.findFirst({
+      where: {
+        userId: typedPayload.userId,
+        status: "PENDING",
+      },
+    });
+
+    if (existingActiveSubscription) {
       // If the user wants to switch to the same plan, return an error
-      if (existingSubscription.plan === validatedData.plan) {
+      if (existingActiveSubscription.plan === validatedData.plan) {
         return res.status(400).json({
           success: false,
           message: "You are already subscribed to this plan",
         });
       }
 
-      // For demo purposes, we'll just cancel the old subscription and create a new one
-      // In a real app, you might handle upgrading/downgrading differently
+      // For demo purposes, we'll just cancel the old subscription before creating a new one
       await prisma.subscription.update({
         where: {
-          id: existingSubscription.id,
+          id: existingActiveSubscription.id,
         },
         data: {
           status: "CANCELED",
@@ -87,26 +103,64 @@ export default async function handler(
       });
     }
 
+    if (existingPendingSubscription) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "You already have a pending subscription request. Please wait for administrator approval.",
+      });
+    }
+
     // Calculate subscription period (for demo purposes, 1 month)
     const now = new Date();
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 1);
 
-    // Create new subscription
+    // Create new subscription with PENDING status (except for FREE plan)
     const newSubscription = await prisma.subscription.create({
       data: {
         userId: typedPayload.userId,
         plan: validatedData.plan,
-        status: "ACTIVE",
+        status: validatedData.plan === "FREE" ? "ACTIVE" : "PENDING", // FREE plan is auto-approved
         paymentMethod: validatedData.paymentMethod,
-        startDate: now,
-        endDate: validatedData.plan === "FREE" ? null : endDate,
+        startDate: validatedData.plan === "FREE" ? now : null, // Only set start date for FREE plan
+        endDate: validatedData.plan === "FREE" ? null : null, // End date will be set when approved
       },
     });
 
+    // If free plan, no need for approval
+    if (validatedData.plan === "FREE") {
+      return res.status(201).json({
+        success: true,
+        message: `Successfully subscribed to the FREE plan`,
+        subscription: newSubscription,
+      });
+    }
+
+    // Notify admins about the new subscription request
+    const admins = await prisma.user.findMany({
+      where: {
+        role: "ADMIN",
+      },
+      select: {
+        email: true,
+      },
+    });
+
+    // If there are admins, notify them about the new subscription request
+    if (admins.length > 0) {
+      for (const admin of admins) {
+        // Send notification email to admin (in a real app, you might want to implement this differently)
+        // This is a placeholder for the admin notification
+        console.log(
+          `Notifying admin ${admin.email} about new subscription request from ${user.email}`
+        );
+      }
+    }
+
     return res.status(201).json({
       success: true,
-      message: `Successfully subscribed to the ${validatedData.plan} plan`,
+      message: `Your subscription request for the ${validatedData.plan} plan has been submitted and is pending approval`,
       subscription: newSubscription,
     });
   } catch (error) {

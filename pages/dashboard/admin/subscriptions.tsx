@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "../../../app/components/shared/Card";
 import { useAuth } from "../../../app/lib/AuthContext";
+import { Button } from "@/app/components/shared/Button";
 
 // Types
 type Subscription = {
@@ -47,34 +48,47 @@ export default function ManageSubscriptionsPage() {
     perPage: 10,
   });
   const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
+  const [approvingSubscription, setApprovingSubscription] = useState<
+    string | null
+  >(null);
+  const [rejectingSubscription, setRejectingSubscription] = useState<
+    string | null
+  >(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] =
+    useState<Subscription | null>(null);
 
-  const fetchSubscriptions = useCallback(async (page: number) => {
-    if (!user) return;
+  const fetchSubscriptions = useCallback(
+    async (page: number) => {
+      if (!user) return;
 
-    try {
-      setLoadingSubscriptions(true);
-      const response = await axios.get(
-        `/api/admin/subscriptions?page=${page}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
+      try {
+        setLoadingSubscriptions(true);
+        const response = await axios.get(
+          `/api/admin/subscriptions?page=${page}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          setSubscriptions(response.data.subscriptions);
+          setPagination(response.data.pagination);
+        } else {
+          toast.error("Failed to fetch subscriptions");
         }
-      );
-
-      if (response.data.success) {
-        setSubscriptions(response.data.subscriptions);
-        setPagination(response.data.pagination);
-      } else {
-        toast.error("Failed to fetch subscriptions");
+      } catch (error) {
+        console.error("Error fetching subscriptions:", error);
+        toast.error("An error occurred while fetching subscriptions");
+      } finally {
+        setLoadingSubscriptions(false);
       }
-    } catch (error) {
-      console.error("Error fetching subscriptions:", error);
-      toast.error("An error occurred while fetching subscriptions");
-    } finally {
-      setLoadingSubscriptions(false);
-    }
-  }, [user]);
+    },
+    [user]
+  );
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -106,6 +120,92 @@ export default function ManageSubscriptionsPage() {
         return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const handleApproveSubscription = async (subscriptionId: string) => {
+    if (!user) return;
+
+    try {
+      setApprovingSubscription(subscriptionId);
+      const response = await axios.post(
+        "/api/admin/approve-subscription",
+        { subscriptionId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Subscription approved successfully");
+        // Update the subscription status locally
+        setSubscriptions(
+          subscriptions.map((sub) =>
+            sub.id === subscriptionId ? { ...sub, status: "ACTIVE" } : sub
+          )
+        );
+      } else {
+        toast.error(response.data.message || "Failed to approve subscription");
+      }
+    } catch (error) {
+      console.error("Error approving subscription:", error);
+      toast.error("An error occurred while approving the subscription");
+    } finally {
+      setApprovingSubscription(null);
+    }
+  };
+
+  const openRejectionModal = (subscription: Subscription) => {
+    setSelectedSubscription(subscription);
+    setRejectionReason("");
+    setShowRejectionModal(true);
+  };
+
+  const closeRejectionModal = () => {
+    setShowRejectionModal(false);
+    setSelectedSubscription(null);
+    setRejectionReason("");
+  };
+
+  const handleRejectSubscription = async () => {
+    if (!user || !selectedSubscription) return;
+
+    try {
+      setRejectingSubscription(selectedSubscription.id);
+      const response = await axios.post(
+        "/api/admin/reject-subscription",
+        {
+          subscriptionId: selectedSubscription.id,
+          rejectionReason: rejectionReason || undefined,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Subscription rejected successfully");
+        // Update the subscription status locally
+        setSubscriptions(
+          subscriptions.map((sub) =>
+            sub.id === selectedSubscription.id
+              ? { ...sub, status: "CANCELED" }
+              : sub
+          )
+        );
+        closeRejectionModal();
+      } else {
+        toast.error(response.data.message || "Failed to reject subscription");
+      }
+    } catch (error) {
+      console.error("Error rejecting subscription:", error);
+      toast.error("An error occurred while rejecting the subscription");
+    } finally {
+      setRejectingSubscription(null);
     }
   };
 
@@ -183,6 +283,12 @@ export default function ManageSubscriptionsPage() {
                         >
                           Expires
                         </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                        >
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-gray-700">
@@ -228,6 +334,41 @@ export default function ManageSubscriptionsPage() {
                                   subscription.endDate
                                 ).toLocaleDateString()
                               : "Never"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {subscription.status === "PENDING" ? (
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() =>
+                                    handleApproveSubscription(subscription.id)
+                                  }
+                                  isLoading={
+                                    approvingSubscription === subscription.id
+                                  }
+                                  disabled={
+                                    approvingSubscription !== null ||
+                                    rejectingSubscription !== null
+                                  }
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() =>
+                                    openRejectionModal(subscription)
+                                  }
+                                  disabled={
+                                    approvingSubscription !== null ||
+                                    rejectingSubscription !== null
+                                  }
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            ) : null}
                           </td>
                         </tr>
                       ))}
@@ -285,6 +426,55 @@ export default function ManageSubscriptionsPage() {
           </Card>
         </div>
       </DashboardLayout>
+
+      {/* Rejection Modal */}
+      {showRejectionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">
+              Reject Subscription Request
+            </h3>
+            <p className="mb-4">
+              Are you sure you want to reject the subscription request for{" "}
+              <span className="font-medium">{selectedSubscription?.plan}</span>{" "}
+              by user{" "}
+              <span className="font-medium">
+                {selectedSubscription?.user.username}
+              </span>
+              ?
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Reason for rejection (optional):
+              </label>
+              <textarea
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-slate-700"
+                rows={3}
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Provide a reason for rejection (will be shared with the user)"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={closeRejectionModal}
+                disabled={rejectingSubscription !== null}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleRejectSubscription}
+                isLoading={rejectingSubscription === selectedSubscription?.id}
+                disabled={rejectingSubscription !== null}
+              >
+                Reject Subscription
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
