@@ -41,7 +41,9 @@ export function Header() {
   const navLinks = user
     ? [
         { name: "Dashboard", href: "/dashboard" },
-        { name: "Gallery", href: "/dashboard/user/gallery" },
+        ...(user.role === "USER"
+          ? [{ name: "Gallery", href: "/dashboard/user/gallery" }]
+          : []),
         { name: "Subscription", href: "/subscription" },
       ]
     : [
@@ -92,13 +94,15 @@ export function Header() {
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                 >
                   {user.profilePicture ? (
-                    <Image
-                      className="rounded-full"
-                      src={user.profilePicture}
-                      alt="User profile"
-                      width={32}
-                      height={32}
-                    />
+                    <div className="relative w-10 h-10">
+                      <Image
+                        className="rounded-full object-cover"
+                        src={user.profilePicture}
+                        alt="User profile"
+                        fill
+                        sizes="32px"
+                      />
+                    </div>
                   ) : (
                     <UserCircleIcon className="h-8 w-8 text-gray-500" />
                   )}
