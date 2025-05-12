@@ -47,9 +47,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   try {
     const payload = await verifyJwt(token);
-
     if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
-      throw new Error("Invalid token");
+      return {
+        redirect: {
+          destination: '/login',
+          permanent: false,
+        },
+      };
     }
 
     // Get user from database
@@ -150,19 +154,26 @@ export default function UserDashboardPage({
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState(initialData);
-  useEffect(() => {
-    // Client-side auth check as a backup
-    if (!isLoading && !user) {
-      window.location.href = "/login";
-      return;
-    }
 
-    // Update data from props
+  useEffect(() => {
+    // Only redirect if we're sure the user is not authenticated
+    if (!isLoading && !user) {
+      router.push('/login');
+    }
+  }, [isLoading, user, router]);
+
+  // Update dashboard data when initialData changes
+  useEffect(() => {
     setDashboardData(initialData);
-  }, [user, isLoading, router, initialData]);
+  }, [initialData]);
 
   if (isLoading) {
     return <LoadingPage message="Loading your dashboard..." />;
+  }
+
+  // Don't render anything if we're redirecting
+  if (!user) {
+    return null;
   }
 
   return (

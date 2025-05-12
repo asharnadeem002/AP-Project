@@ -85,14 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    checkAuth();
-  }, [user]); // Re-run when user changes
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem("authToken");
@@ -115,6 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   };
+
+  // Single useEffect for initial auth check
+  useEffect(() => {
+    checkAuth();
+  }, []); // Empty dependency array means this runs once on mount
 
   const login = async (email: string, password: string) => {
     try {
