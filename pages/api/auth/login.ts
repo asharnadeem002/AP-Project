@@ -4,7 +4,6 @@ import { z } from "zod";
 import prisma from "../../../app/lib/db";
 import { sendEmail, generateVerificationToken } from "../../../app/lib/email";
 
-// Validation schema
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
@@ -14,7 +13,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -22,10 +20,8 @@ export default async function handler(
   }
 
   try {
-    // Validate request body
     const validatedData = loginSchema.parse(req.body);
 
-    // Find the user
     const user = await prisma.user.findUnique({
       where: {
         email: validatedData.email,
@@ -39,7 +35,6 @@ export default async function handler(
       });
     }
 
-    // Check if user email is verified
     if (!user.isVerified) {
       return res.status(403).json({
         success: false,
@@ -47,7 +42,6 @@ export default async function handler(
       });
     }
 
-    // Check if user is approved by admin
     if (!user.isApproved) {
       return res.status(403).json({
         success: false,
@@ -55,7 +49,6 @@ export default async function handler(
       });
     }
 
-    // Verify password
     const passwordValid = await bcrypt.compare(
       validatedData.password,
       user.password
@@ -68,12 +61,10 @@ export default async function handler(
       });
     }
 
-    // Generate login verification token
     const loginToken = generateVerificationToken();
     const tokenExpiry = new Date();
-    tokenExpiry.setMinutes(tokenExpiry.getMinutes() + 15); // Token valid for 15 minutes
+    tokenExpiry.setMinutes(tokenExpiry.getMinutes() + 15);
 
-    // Store the token
     await prisma.token.create({
       data: {
         token: loginToken,
@@ -83,7 +74,6 @@ export default async function handler(
       },
     });
 
-    // Send verification email
     await sendEmail(user.email, "login", { token: loginToken });
 
     return res.status(200).json({

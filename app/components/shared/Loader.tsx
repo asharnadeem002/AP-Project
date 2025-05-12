@@ -1,7 +1,6 @@
 import React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-// Define loader variants using CVA
 const loaderVariants = cva(
   "inline-block animate-spin rounded-full border-t-transparent",
   {
@@ -26,7 +25,6 @@ const loaderVariants = cva(
   }
 );
 
-// Define loader props
 export interface LoaderProps extends VariantProps<typeof loaderVariants> {
   className?: string;
 }
@@ -41,7 +39,6 @@ export const Loader: React.FC<LoaderProps> = ({ size, color, className }) => {
   );
 };
 
-// LoadingPage component for full-page loading
 export const LoadingPage: React.FC<{ message?: string }> = ({
   message = "Loading...",
 }) => {
@@ -57,7 +54,6 @@ export const LoadingPage: React.FC<{ message?: string }> = ({
   );
 };
 
-// Section loader with optional overlay
 export const LoadingOverlay: React.FC<{
   message?: string;
   isTransparent?: boolean;

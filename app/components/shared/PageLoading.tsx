@@ -2,20 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Loader } from "./Loader";
 
 type PageLoadingProps = {
-  /**
-   * Optional custom message to display while loading
-   */
   message?: string;
 
-  /**
-   * Optional delay in ms before showing loader (prevents flashing for quick transitions)
-   */
   delay?: number;
 };
 
-/**
- * PageLoading component for handling route transitions with optional delay
- */
 export const PageLoading: React.FC<PageLoadingProps> = ({
   message = "Loading...",
   delay = 300,
@@ -46,9 +37,6 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
   );
 };
 
-/**
- * Helper component for showing loader when transitioning between pages
- */
 export const RouteChangeLoading: React.FC = () => {
   return (
     <div className="fixed inset-0 bg-white/80 dark:bg-gray-900/80 z-50 flex items-center justify-center">

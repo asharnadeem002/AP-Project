@@ -140,7 +140,6 @@ export default function ManageSubscriptionsPage() {
 
       if (response.data.success) {
         toast.success("Subscription approved successfully");
-        // Update the subscription status locally
         setSubscriptions(
           subscriptions.map((sub) =>
             sub.id === subscriptionId ? { ...sub, status: "ACTIVE" } : sub
@@ -189,7 +188,6 @@ export default function ManageSubscriptionsPage() {
 
       if (response.data.success) {
         toast.success("Subscription rejected successfully");
-        // Update the subscription status locally
         setSubscriptions(
           subscriptions.map((sub) =>
             sub.id === selectedSubscription.id
@@ -377,7 +375,6 @@ export default function ManageSubscriptionsPage() {
                 </div>
               )}
 
-              {/* Pagination */}
               {pagination.pages > 1 && (
                 <div className="flex justify-center mt-6">
                   <nav className="flex items-center">
@@ -427,7 +424,6 @@ export default function ManageSubscriptionsPage() {
         </div>
       </DashboardLayout>
 
-      {/* Rejection Modal */}
       {showRejectionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md">

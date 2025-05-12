@@ -18,7 +18,6 @@ import {
 import { Input } from "../../../app/components/shared/Input";
 import { Prisma } from "@prisma/client";
 
-// Types for our data
 interface User {
   id: string;
   email: string;
@@ -38,13 +37,6 @@ interface UsersPageProps {
   totalPages: number;
 }
 
-/**
- * Server-Side Rendering (SSR) for the admin users page
- * Benefits:
- * 1. Real-time data from the database
- * 2. Authentication check on the server
- * 3. Pre-rendering with user data for SEO and performance
- */
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const token = context.req.cookies.authToken;
 
@@ -64,12 +56,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       throw new Error("Invalid token");
     }
 
-    // Get user from database
     const user = await prisma.user.findUnique({
       where: { id: payload.userId as string },
     });
 
-    // Check if user is admin
     if (!user || user.role !== "ADMIN") {
       return {
         redirect: {
@@ -79,14 +69,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       };
     }
 
-    // Parse query parameters
     const page = parseInt(context.query.page as string) || 1;
     const limit = 10;
     const skip = (page - 1) * limit;
     const search = (context.query.search as string) || "";
     const status = (context.query.status as string) || "";
 
-    // Build query filter
     const where: Prisma.UserWhereInput = {};
 
     if (search) {
@@ -106,10 +94,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       where.isApproved = false;
     }
 
-    // Count total users
     const totalUsers = await prisma.user.count({ where });
 
-    // Fetch users with pagination
     const users = await prisma.user.findMany({
       where,
       skip,
@@ -119,7 +105,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       },
     });
 
-    // Format users for the client
     const formattedUsers = users.map((user) => ({
       id: user.id,
       email: user.email,
@@ -129,10 +114,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       isVerified: user.isVerified,
       isApproved: user.isApproved,
       createdAt: user.createdAt.toISOString(),
-      isActive: user.isActive ?? true, // Use nullish coalescing for backward compatibility
+      isActive: user.isActive ?? true,
     }));
 
-    // Calculate total pages
     const totalPages = Math.ceil(totalUsers / limit);
 
     return {
@@ -174,7 +158,6 @@ export default function UsersPage({
   const [deactivationReason, setDeactivationReason] = useState("");
 
   useEffect(() => {
-    // Client-side auth check as a backup
     if (!isLoading && !user) {
       router.push("/login");
       return;
@@ -185,7 +168,6 @@ export default function UsersPage({
       return;
     }
 
-    // Update users from props
     setUsers(initialUsers);
   }, [user, isLoading, router, initialUsers]);
 
@@ -238,7 +220,6 @@ export default function UsersPage({
       if (result.success) {
         toast.success("User approved successfully");
 
-        // Update the local user list
         setUsers(
           users.map((u) => (u.id === userId ? { ...u, isApproved: true } : u))
         );
@@ -254,7 +235,7 @@ export default function UsersPage({
   };
 
   const openDeactivateModal = (user: User) => {
-    if (user.role === "ADMIN") return; // Extra safety check
+    if (user.role === "ADMIN") return;
     setSelectedUser(user);
     setDeactivationReason("");
     setShowDeactivateModal(true);
@@ -290,7 +271,6 @@ export default function UsersPage({
       if (result.success) {
         toast.success("User deactivated successfully");
 
-        // Update the local user list
         setUsers(
           users.map((u) =>
             u.id === selectedUser.id ? { ...u, isActive: false } : u
@@ -327,7 +307,6 @@ export default function UsersPage({
       if (result.success) {
         toast.success("User reactivated successfully");
 
-        // Update the local user list
         setUsers(
           users.map((u) => (u.id === userId ? { ...u, isActive: true } : u))
         );
@@ -377,7 +356,6 @@ export default function UsersPage({
             </div>
           </div>
 
-          {/* Filters */}
           <Card>
             <CardHeader>
               <CardTitle>Search & Filter</CardTitle>
@@ -422,7 +400,6 @@ export default function UsersPage({
             </CardContent>
           </Card>
 
-          {/* User Table */}
           <Card>
             <CardHeader>
               <CardTitle>Users ({totalUsers})</CardTitle>
@@ -526,7 +503,6 @@ export default function UsersPage({
                 )}
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center mt-6">
                   <div className="flex space-x-2">

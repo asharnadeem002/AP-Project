@@ -4,7 +4,6 @@ import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
 import { sendEmail } from "../../../app/lib/email";
 
-// Validation schema
 const deactivateUserSchema = z.object({
   userId: z.string().uuid("Invalid user ID format"),
   deactivationReason: z.string().optional(),
@@ -14,7 +13,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -22,7 +20,6 @@ export default async function handler(
   }
 
   try {
-    // Verify admin authentication
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -36,17 +33,14 @@ export default async function handler(
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
-    // Verify admin role
     if (payload.role !== "ADMIN") {
       return res
         .status(403)
         .json({ success: false, message: "Insufficient permissions" });
     }
 
-    // Validate request body
     const validatedData = deactivateUserSchema.parse(req.body);
 
-    // Find the user
     const user = await prisma.user.findUnique({
       where: {
         id: validatedData.userId,
@@ -59,24 +53,20 @@ export default async function handler(
         .json({ success: false, message: "User not found" });
     }
 
-    // Prevent deactivating an admin user
     if (user.role === "ADMIN") {
       return res
         .status(400)
         .json({ success: false, message: "Cannot deactivate an admin user" });
     }
 
-    // If user is already inactive
     if (user.isActive === false) {
       return res
         .status(400)
         .json({ success: false, message: "User is already deactivated" });
     }
 
-    // Store the deactivation reason
     const deactivationReason = validatedData.deactivationReason;
 
-    // Update user to deactivated status
     await prisma.user.update({
       where: {
         id: user.id,
@@ -86,7 +76,6 @@ export default async function handler(
       },
     });
 
-    // Send deactivation email to the user
     try {
       const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
       const reactivationUrl = `${baseUrl}/request-reactivation`;
@@ -98,7 +87,6 @@ export default async function handler(
       });
     } catch (emailError) {
       console.error("Error sending deactivation email:", emailError);
-      // Continue the process even if the email fails
     }
 
     return res.status(200).json({

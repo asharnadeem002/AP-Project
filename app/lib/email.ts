@@ -3,7 +3,6 @@ import fs from "fs";
 import path from "path";
 import Handlebars from "handlebars";
 
-// Configure email transporter
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_SERVER_HOST || "smtp.gmail.com",
   port: Number(process.env.EMAIL_SERVER_PORT) || 587,
@@ -14,7 +13,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Helper function to read email templates
 const getEmailTemplate = (templateName: string) => {
   const templatePath = path.join(
     process.cwd(),
@@ -35,7 +33,6 @@ const getEmailTemplate = (templateName: string) => {
   }
 };
 
-// Fallback templates
 const getFallbackTemplate = (templateType: string) => {
   switch (templateType) {
     case "verification":
@@ -196,7 +193,6 @@ const getFallbackTemplate = (templateType: string) => {
   }
 };
 
-// Get email templates and compile with Handlebars
 const compileTemplate = (
   templateName: string,
   context: Record<string, string | number>
@@ -206,7 +202,6 @@ const compileTemplate = (
   return compiledTemplate(context);
 };
 
-// Email templates with Handlebars
 const getEmailContent = (
   template:
     | "verification"
@@ -244,7 +239,6 @@ const getEmailContent = (
   };
 };
 
-// Send email function
 export async function sendEmail(
   to: string,
   template:
@@ -278,7 +272,6 @@ export async function sendEmail(
   }
 }
 
-// Generate a random verification token (6 digits)
 export function generateVerificationToken() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }

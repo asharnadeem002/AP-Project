@@ -4,7 +4,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -12,7 +11,6 @@ export default async function handler(
   }
 
   try {
-    // Clear the auth cookie by setting an expired cookie
     res.setHeader(
       "Set-Cookie",
       `authToken=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`

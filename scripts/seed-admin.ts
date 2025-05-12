@@ -1,20 +1,13 @@
-/**
- * This script seeds admin users directly into the database.
- * Usage: npx ts-node scripts/seed-admin.ts
- */
-
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import path from "path";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 
-// Load environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
-// Admin users to be seeded
 const ADMIN_USERS = [
   {
     email: "l217748@lhr.nu.edu.pk",
@@ -31,7 +24,6 @@ const ADMIN_USERS = [
 ];
 
 async function seedAdmins() {
-  // Initialize Prisma client
   const prisma = new PrismaClient();
 
   try {
@@ -41,7 +33,6 @@ async function seedAdmins() {
 
     for (const adminData of ADMIN_USERS) {
       try {
-        // Check if admin already exists
         const existingAdmin = await prisma.user.findFirst({
           where: {
             OR: [{ email: adminData.email }, { username: adminData.username }],
@@ -57,10 +48,8 @@ async function seedAdmins() {
           continue;
         }
 
-        // Hash password
         const hashedPassword = await bcrypt.hash(adminData.password, 12);
 
-        // Create the admin user
         const admin = await prisma.user.create({
           data: {
             email: adminData.email,
@@ -98,10 +87,8 @@ async function seedAdmins() {
     console.error("❌ Error seeding admin users:", error);
     process.exit(1);
   } finally {
-    // Disconnect Prisma client
     await prisma.$disconnect();
   }
 }
 
-// Run the seed function
 seedAdmins();

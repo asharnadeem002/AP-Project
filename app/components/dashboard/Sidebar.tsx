@@ -192,7 +192,6 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      {/* User info at bottom */}
       {!collapsed && user && (
         <div className="p-4 border-t border-slate-700">
           <div className="flex items-center">

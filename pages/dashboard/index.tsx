@@ -14,12 +14,9 @@ import { GetServerSideProps } from "next";
 import { verifyJwt, JWTPayload } from "../../app/lib/jwt";
 import prisma from "../../app/lib/db";
 
-// Use GetServerSideProps for protected routes
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  // Get auth token from cookies
   const token = context.req.cookies.authToken;
 
-  // If no token, redirect to login
   if (!token) {
     return {
       redirect: {
@@ -29,22 +26,19 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  // Verify token
   try {
     const payload = await verifyJwt(token);
 
-    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
       throw new Error("Invalid token");
     }
 
     const typedPayload = payload as JWTPayload;
 
-    // Get user from database
     const user = await prisma.user.findUnique({
       where: { id: typedPayload.userId },
     });
 
-    // Redirect based on user role
     if (user?.role === "ADMIN") {
       return {
         redirect: {
@@ -61,12 +55,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       };
     }
 
-    // If we get here, just render the page with empty props
     return {
       props: {},
     };
   } catch (error) {
-    // If token verification fails, redirect to login
     console.error("Dashboard auth error:", error);
     return {
       redirect: {
@@ -93,14 +85,11 @@ export default function DashboardPage() {
       return;
     }
 
-    // In a real application, you would fetch this data from an API
     const fetchDashboardData = async () => {
       try {
         setLoadingStats(true);
-        // Simulate API call with a delay
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        // Mocked data for now
         setStats({
           galleryItems: 12,
           favoriteItems: 3,
@@ -142,7 +131,6 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {loadingStats ? (
-              // Show skeleton loaders during loading
               Array(3)
                 .fill(0)
                 .map((_, index) => (
@@ -157,7 +145,6 @@ export default function DashboardPage() {
                   </Card>
                 ))
             ) : (
-              // Show actual content when loaded
               <>
                 <Card>
                   <CardHeader>

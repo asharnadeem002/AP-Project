@@ -3,7 +3,6 @@ import { z } from "zod";
 import prisma from "../../../app/lib/db";
 import { sendEmail } from "../../../app/lib/email";
 
-// Validation schema
 const verifyEmailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   token: z.string().min(6).max(6),
@@ -13,7 +12,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -21,10 +19,8 @@ export default async function handler(
   }
 
   try {
-    // Validate request body
     const validatedData = verifyEmailSchema.parse(req.body);
 
-    // Find the user
     const user = await prisma.user.findUnique({
       where: {
         email: validatedData.email,
@@ -45,7 +41,6 @@ export default async function handler(
       });
     }
 
-    // Find the token
     const token = await prisma.token.findFirst({
       where: {
         userId: user.id,
@@ -64,7 +59,6 @@ export default async function handler(
       });
     }
 
-    // Update user verification status
     await prisma.user.update({
       where: {
         id: user.id,
@@ -74,14 +68,12 @@ export default async function handler(
       },
     });
 
-    // Delete the used token
     await prisma.token.delete({
       where: {
         id: token.id,
       },
     });
 
-    // Notify admin about new user registration
     const admins = await prisma.user.findMany({
       where: {
         role: "ADMIN",
@@ -91,14 +83,9 @@ export default async function handler(
       },
     });
 
-    // If there are admins, notify them about the new user
     if (admins.length > 0) {
       for (const admin of admins) {
-        await sendEmail(
-          admin.email,
-          "accountApproved", // Using this template, but we'll just modify the subject line
-          undefined // No token needed
-        );
+        await sendEmail(admin.email, "accountApproved", undefined);
       }
     }
 

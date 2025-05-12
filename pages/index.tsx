@@ -15,9 +15,7 @@ import {
   MagnifyingGlassIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
-// import { UrlObject } from "url";
 
-// Price plans data
 const pricingPlans = [
   {
     name: "Free",

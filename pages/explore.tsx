@@ -8,7 +8,6 @@ import { Loader } from "../app/components/shared/Loader";
 import { useRouter } from "next/router";
 import Image from "next/image";
 
-// Types
 interface Tag {
   id: string;
   name: string;
@@ -27,7 +26,6 @@ interface ExplorePageProps {
   initialTags: Tag[];
 }
 
-// SWR fetcher function
 const fetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) {
@@ -36,13 +34,7 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-/**
- * Static Site Generation (SSG) with Incremental Static Regeneration (ISR)
- * Used to provide initial data before client-side fetching takes over
- */
 export const getStaticProps: GetStaticProps<ExplorePageProps> = async () => {
-  // Initial tags statically generated at build time
-  // In a real app, this would be fetched from an API
   const initialTags: Tag[] = [
     { id: "tag-1", name: "nature", count: 24 },
     { id: "tag-2", name: "travel", count: 18 },
@@ -56,35 +48,23 @@ export const getStaticProps: GetStaticProps<ExplorePageProps> = async () => {
     props: {
       initialTags,
     },
-    // Enable ISR - revalidate every hour
     revalidate: 60 * 60,
   };
 };
 
-/**
- * The Explore page component
- * Demonstrates:
- * 1. SSG with ISR for initial data
- * 2. Client-side data fetching with SWR
- * 3. Search and filtering functionality
- */
 export default function ExplorePage({ initialTags }: ExplorePageProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  // Get query parameters
   const { query } = router;
   const page = parseInt(query.page as string) || 1;
 
-  // Construct API URL with params
   const apiUrl = `/api/photos?page=${page}${
     selectedTag ? `&tag=${selectedTag}` : ""
   }${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ""}`;
 
-  // Client-side data fetching with SWR
   const { data, error, isLoading, isValidating } = useSWR(apiUrl, fetcher, {
-    // Fallback data for when the request isn't yet complete
     fallbackData: {
       photos: Array.from({ length: 9 }, (_, i) => ({
         id: `photo-${i + 1}`,
@@ -98,22 +78,19 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
       totalPages: 5,
       currentPage: page,
     },
-    // Revalidate data every 30 seconds
     refreshInterval: 30000,
   });
 
-  // Handle search submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Update query parameters
     router.push(
       {
         pathname: "/explore",
         query: {
           ...(selectedTag && { tag: selectedTag }),
           ...(searchQuery && { search: searchQuery }),
-          page: 1, // Reset to page 1 when searching
+          page: 1,
         },
       },
       undefined,
@@ -121,13 +98,10 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
     );
   };
 
-  // Handle tag selection
   const handleTagClick = (tagName: string) => {
     if (selectedTag === tagName) {
-      // Deselect if already selected
       setSelectedTag(null);
 
-      // Update URL without the tag parameter
       router.push(
         {
           pathname: "/explore",
@@ -140,17 +114,15 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
         { shallow: true }
       );
     } else {
-      // Select new tag
       setSelectedTag(tagName);
 
-      // Update URL with the new tag
       router.push(
         {
           pathname: "/explore",
           query: {
             tag: tagName,
             ...(searchQuery && { search: searchQuery }),
-            page: 1, // Reset to page 1 when changing tag
+            page: 1,
           },
         },
         undefined,
@@ -159,7 +131,6 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
     }
   };
 
-  // Handle pagination
   const handlePageChange = (newPage: number) => {
     router.push(
       {
@@ -197,7 +168,6 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Sidebar with filters */}
             <div className="lg:col-span-1">
               <div className="sticky top-8">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
@@ -257,9 +227,7 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
               </div>
             </div>
 
-            {/* Main content - photo grid */}
             <div className="lg:col-span-3">
-              {/* Filter information */}
               {(selectedTag || searchQuery) && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4 mb-6 flex items-center justify-between">
                   <div>
@@ -290,14 +258,12 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
                 </div>
               )}
 
-              {/* Loading state */}
               {isLoading && !data && (
                 <div className="flex justify-center py-20">
                   <Loader size="lg" />
                 </div>
               )}
 
-              {/* Error state */}
               {error && (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg p-6 text-center">
                   <p className="text-red-800 dark:text-red-200 mb-4">
@@ -312,10 +278,8 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
                 </div>
               )}
 
-              {/* Results */}
               {data && (
                 <>
-                  {/* Photos grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     {data.photos.map((photo: Photo) => (
                       <div
@@ -357,7 +321,6 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
                     ))}
                   </div>
 
-                  {/* Refresh indicator */}
                   {isValidating && data && (
                     <div className="flex justify-center mb-6">
                       <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
@@ -367,7 +330,6 @@ export default function ExplorePage({ initialTags }: ExplorePageProps) {
                     </div>
                   )}
 
-                  {/* Pagination */}
                   {data.totalPages > 1 && (
                     <div className="flex justify-center mt-8">
                       <div className="flex space-x-2">

@@ -7,7 +7,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -15,26 +14,22 @@ export default async function handler(
   }
 
   try {
-    // Get the authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    // Extract the token
     const token = authHeader.split(" ")[1];
 
-    // Verify the token
     const payload = await verifyJwt(token);
 
-    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
     const typedPayload = payload as JWTPayload;
 
-    // Get the user's active subscription
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: typedPayload.userId,
@@ -49,7 +44,6 @@ export default async function handler(
       });
     }
 
-    // Free subscriptions cannot be canceled
     if (subscription.plan === "FREE") {
       return res.status(400).json({
         success: false,
@@ -57,26 +51,24 @@ export default async function handler(
       });
     }
 
-    // Cancel the subscription
     await prisma.subscription.update({
       where: {
         id: subscription.id,
       },
       data: {
         status: "CANCELED",
-        endDate: new Date(), // End the subscription immediately for demo purposes
+        endDate: new Date(),
       },
     });
 
-    // Create a free subscription for the user so they still have access to basic features
     const freeSubscription = await prisma.subscription.create({
       data: {
         userId: typedPayload.userId,
         plan: "FREE",
         status: "ACTIVE",
-        paymentMethod: "CASH", // Default for free plan
+        paymentMethod: "CASH",
         startDate: new Date(),
-        endDate: null, // Free plans never expire
+        endDate: null,
       },
     });
 

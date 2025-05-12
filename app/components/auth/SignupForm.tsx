@@ -17,7 +17,6 @@ import {
 import { useAuth } from "../../lib/AuthContext";
 import { toast } from "react-toastify";
 
-// Validation schema
 const signupSchema = z
   .object({
     username: z

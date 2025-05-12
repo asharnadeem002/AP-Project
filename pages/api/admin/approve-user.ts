@@ -4,7 +4,6 @@ import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
 import { sendEmail } from "../../../app/lib/email";
 
-// Validation schema
 const approveUserSchema = z.object({
   userId: z.string().uuid("Invalid user ID format"),
 });
@@ -13,7 +12,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -21,7 +19,6 @@ export default async function handler(
   }
 
   try {
-    // Verify admin authentication
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -31,21 +28,18 @@ export default async function handler(
     const token = authHeader.split(" ")[1];
     const payload = await verifyJwt(token);
 
-    if (!payload || typeof payload !== 'object' || !('role' in payload)) {
+    if (!payload || typeof payload !== "object" || !("role" in payload)) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
-    // Verify admin role
     if (payload.role !== "ADMIN") {
       return res
         .status(403)
         .json({ success: false, message: "Insufficient permissions" });
     }
 
-    // Validate request body
     const validatedData = approveUserSchema.parse(req.body);
 
-    // Find the user
     const user = await prisma.user.findUnique({
       where: {
         id: validatedData.userId,
@@ -64,7 +58,6 @@ export default async function handler(
         .json({ success: false, message: "User is already approved" });
     }
 
-    // Update user approval status
     await prisma.user.update({
       where: {
         id: user.id,
@@ -74,7 +67,6 @@ export default async function handler(
       },
     });
 
-    // Send approval notification email to the user
     await sendEmail(user.email, "accountApproved");
 
     return res.status(200).json({

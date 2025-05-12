@@ -13,7 +13,6 @@ import {
 import { Button } from "../../../app/components/shared/Button";
 import { useAuth } from "../../../app/lib/AuthContext";
 
-// Types
 type PendingUser = {
   id: string;
   email: string;
@@ -43,33 +42,36 @@ export default function PendingUsersPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [approvingUser, setApprovingUser] = useState<string | null>(null);
 
-  const fetchPendingUsers = useCallback(async (page: number) => {
-    if (!user) return;
+  const fetchPendingUsers = useCallback(
+    async (page: number) => {
+      if (!user) return;
 
-    try {
-      setLoadingUsers(true);
-      const response = await axios.get(
-        `/api/admin/pending-users?page=${page}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
+      try {
+        setLoadingUsers(true);
+        const response = await axios.get(
+          `/api/admin/pending-users?page=${page}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          setPendingUsers(response.data.users);
+          setPagination(response.data.pagination);
+        } else {
+          toast.error("Failed to fetch pending users");
         }
-      );
-
-      if (response.data.success) {
-        setPendingUsers(response.data.users);
-        setPagination(response.data.pagination);
-      } else {
-        toast.error("Failed to fetch pending users");
+      } catch (error) {
+        console.error("Error fetching pending users:", error);
+        toast.error("An error occurred while fetching pending users");
+      } finally {
+        setLoadingUsers(false);
       }
-    } catch (error) {
-      console.error("Error fetching pending users:", error);
-      toast.error("An error occurred while fetching pending users");
-    } finally {
-      setLoadingUsers(false);
-    }
-  }, [user]);
+    },
+    [user]
+  );
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -102,9 +104,7 @@ export default function PendingUsersPage() {
 
       if (response.data.success) {
         toast.success("User approved successfully");
-        // Remove the approved user from the list
         setPendingUsers(pendingUsers.filter((user) => user.id !== userId));
-        // Update pagination
         setPagination((prev) => ({
           ...prev,
           total: prev.total - 1,
@@ -242,7 +242,6 @@ export default function PendingUsersPage() {
                 </div>
               )}
 
-              {/* Pagination */}
               {pagination.pages > 1 && (
                 <div className="flex justify-center mt-6">
                   <nav className="flex items-center">

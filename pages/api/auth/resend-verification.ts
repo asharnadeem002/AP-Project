@@ -5,7 +5,6 @@ import { sendEmail, generateVerificationToken } from "../../../app/lib/email";
 
 const prisma = new PrismaClient();
 
-// Input validation schema
 const resendVerificationSchema = z.object({
   email: z.string().email("Please provide a valid email address"),
 });
@@ -14,7 +13,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST method
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -22,10 +20,8 @@ export default async function handler(
   }
 
   try {
-    // Validate input
     const { email } = resendVerificationSchema.parse(req.body);
 
-    // Find user
     const user = await prisma.user.findUnique({
       where: { email },
     });
@@ -43,16 +39,14 @@ export default async function handler(
       });
     }
 
-    // Generate new verification token
     const verificationToken = generateVerificationToken();
 
-    // Update user with new verification token
     const existingToken = await prisma.token.findFirst({
       where: { userId: user.id, type: "VERIFICATION" },
     });
 
     await prisma.token.upsert({
-      where: { id: existingToken?.id || "" }, // Use an existing ID or default to an empty string
+      where: { id: existingToken?.id || "" },
       update: {
         token: verificationToken,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -65,7 +59,6 @@ export default async function handler(
       },
     });
 
-    // Send verification email
     await sendEmail(email, "verification", { token: verificationToken });
 
     return res.status(200).json({

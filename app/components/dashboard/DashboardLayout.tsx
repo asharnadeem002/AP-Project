@@ -11,10 +11,8 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-slate-900">
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
 
@@ -27,7 +25,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </footer>
       </div>
 
-      {/* Toast notifications */}
       <ToastContainer
         position="top-right"
         autoClose={5000}

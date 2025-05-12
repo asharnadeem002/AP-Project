@@ -22,17 +22,11 @@ interface BlogIndexPageProps {
   posts: BlogPost[];
 }
 
-/**
- * Static Site Generation (SSG) with Incremental Static Regeneration (ISR)
- * This generates the blog index page at build time and can regenerate it
- * on-demand after deployment without rebuilding the site.
- */
 export const getStaticProps: GetStaticProps<BlogIndexPageProps> = async () => {
   try {
-    // Make direct database query instead of API call during static generation
     const posts = await prisma.blogPost.findMany({
       where: { published: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       select: {
         slug: true,
         title: true,
@@ -50,13 +44,13 @@ export const getStaticProps: GetStaticProps<BlogIndexPageProps> = async () => {
       props: {
         posts: posts.map((post) => ({
           ...post,
-          createdAt: format(new Date(post.createdAt), 'MMMM d, yyyy'),
+          createdAt: format(new Date(post.createdAt), "MMMM d, yyyy"),
         })),
       },
-      revalidate: 60 * 5, // Revalidate every 5 minutes
+      revalidate: 60 * 5,
     };
   } catch (error) {
-    console.error('Error fetching blog posts:', error);
+    console.error("Error fetching blog posts:", error);
     return {
       props: { posts: [] },
       revalidate: 60 * 5,
@@ -64,10 +58,6 @@ export const getStaticProps: GetStaticProps<BlogIndexPageProps> = async () => {
   }
 };
 
-/**
- * The BlogIndex page component
- * Displays a list of all blog posts with links to the full articles
- */
 export default function BlogIndexPage({ posts }: BlogIndexPageProps) {
   return (
     <>
@@ -83,7 +73,6 @@ export default function BlogIndexPage({ posts }: BlogIndexPageProps) {
         <Header />
 
         <main className="flex-grow">
-          {/* Hero Section */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
             <div className="max-w-5xl mx-auto px-4 py-16">
               <div className="text-center">
@@ -91,13 +80,13 @@ export default function BlogIndexPage({ posts }: BlogIndexPageProps) {
                   SnapTrace Blog
                 </h1>
                 <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto">
-                  Discover insights, tutorials, and updates from the SnapTrace team
+                  Discover insights, tutorials, and updates from the SnapTrace
+                  team
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Blog Posts Grid */}
           <div className="max-w-6xl mx-auto px-4 py-12">
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {posts.map((post) => (
@@ -111,8 +100,12 @@ export default function BlogIndexPage({ posts }: BlogIndexPageProps) {
                         {post.title.charAt(0)}
                       </div>
                       <div className="ml-3">
-                        <p className="text-sm text-gray-600">{post.createdAt}</p>
-                        <p className="text-sm font-medium">By {post.author.username}</p>
+                        <p className="text-sm text-gray-600">
+                          {post.createdAt}
+                        </p>
+                        <p className="text-sm font-medium">
+                          By {post.author.username}
+                        </p>
                       </div>
                     </div>
                     <h2 className="text-xl font-bold mb-3 text-gray-900 line-clamp-2">
@@ -156,7 +149,9 @@ export default function BlogIndexPage({ posts }: BlogIndexPageProps) {
           <div className="max-w-5xl mx-auto px-4 text-center">
             <div className="mb-4">
               <h2 className="text-2xl font-bold">SnapTrace</h2>
-              <p className="text-gray-400">Your photos, your memories, your way</p>
+              <p className="text-gray-400">
+                Your photos, your memories, your way
+              </p>
             </div>
             <p className="text-gray-500">
               &copy; {new Date().getFullYear()} SnapTrace. All rights reserved.

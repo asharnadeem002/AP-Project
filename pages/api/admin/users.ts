@@ -7,7 +7,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow GET requests
   if (req.method !== "GET") {
     return res
       .status(405)
@@ -15,7 +14,6 @@ export default async function handler(
   }
 
   try {
-    // Verify admin authentication
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -25,18 +23,16 @@ export default async function handler(
     const token = authHeader.split(" ")[1];
     const payload = await verifyJwt(token);
 
-    if (!payload || typeof payload !== 'object' || !('role' in payload)) {
+    if (!payload || typeof payload !== "object" || !("role" in payload)) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
-    // Verify admin role
     if (payload.role !== "ADMIN") {
       return res
         .status(403)
         .json({ success: false, message: "Insufficient permissions" });
     }
 
-    // Parse query parameters
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -44,7 +40,6 @@ export default async function handler(
     const status = req.query.status as string | undefined;
     const role = req.query.role as string | undefined;
 
-    // Build query filter
     const where: Prisma.UserWhereInput = {};
 
     if (search) {
@@ -70,10 +65,8 @@ export default async function handler(
       where.role = "USER";
     }
 
-    // Count total users
     const totalUsers = await prisma.user.count({ where });
 
-    // Fetch users with pagination
     const users = await prisma.user.findMany({
       where,
       skip,
@@ -90,14 +83,12 @@ export default async function handler(
         role: true,
         createdAt: true,
         updatedAt: true,
-        // Exclude password
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    // Calculate pagination info
     const totalPages = Math.ceil(totalUsers / limit);
 
     return res.status(200).json({

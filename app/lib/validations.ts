@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Signup validation schema
 export const signupSchema = z
   .object({
     username: z
@@ -33,30 +32,25 @@ export const signupSchema = z
     path: ["confirmPassword"],
   });
 
-// Email verification schema
 export const verifyEmailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   token: z.string().min(6).max(6),
 });
 
-// Login schema
 export const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
-// Login verification schema
 export const loginVerificationSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   token: z.string().min(6).max(6),
 });
 
-// Forgot password schema
 export const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 
-// Reset password schema
 export const resetPasswordSchema = z
   .object({
     token: z.string().min(6).max(6),
@@ -77,7 +71,6 @@ export const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
-// Update profile schema
 export const updateProfileSchema = z.object({
   username: z
     .string()
@@ -95,7 +88,6 @@ export const updateProfileSchema = z.object({
   gender: z.enum(["male", "female", "other", "prefer_not_to_say"]).optional(),
 });
 
-// Gallery item schema
 export const galleryItemSchema = z.object({
   title: z
     .string()
@@ -108,7 +100,6 @@ export const galleryItemSchema = z.object({
   mediaType: z.enum(["IMAGE", "VIDEO"]),
 });
 
-// Subscription schema
 export const subscriptionSchema = z.object({
   plan: z.enum(["FREE", "BASIC", "PREMIUM", "ENTERPRISE"]),
   paymentMethod: z.enum(["CASH", "STRIPE", "PAYPAL"]),

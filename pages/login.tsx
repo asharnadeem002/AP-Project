@@ -4,13 +4,9 @@ import { AuthLayout } from "../app/components/auth/AuthLayout";
 import { LoginForm } from "../app/components/auth/LoginForm";
 import { GetStaticProps } from "next";
 
-//check commit github desktop
-
-// This function gets called at build time
 export const getStaticProps: GetStaticProps = async () => {
   return {
-    props: {}, // will be passed to the page component as props
-    // Enable ISR - page will be regenerated when requested (at most once every 60 seconds)
+    props: {},
     revalidate: 60,
   };
 };

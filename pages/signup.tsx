@@ -4,18 +4,12 @@ import { AuthLayout } from "../app/components/auth/AuthLayout";
 import { SignupForm } from "../app/components/auth/SignupForm";
 import { GetStaticProps } from "next";
 
-/**
- * Static Site Generation (SSG) with Incremental Static Regeneration (ISR)
- * This function generates the page at build time and can be regenerated
- * after deployment without rebuilding the entire site.
- */
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       pageTitle: "Create an Account | SnapTrace",
       pageDescription: "Create a new SnapTrace account",
     },
-    // Enable ISR with a revalidation period of 60 seconds
     revalidate: 60,
   };
 };

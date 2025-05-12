@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyJwt } from "./jwt";
 import { JWTPayload as JoseJWTPayload } from "jose";
 
-// Types
 export type MiddlewareConfig = {
   requiredRole?: "USER" | "ADMIN";
 };
@@ -16,14 +15,12 @@ interface CustomJWTPayload extends JoseJWTPayload {
   role: "USER" | "ADMIN";
 }
 
-// API route handler middleware
 export async function withAuth(
   req: Request,
   handler: (req: Request, userId: string, role: string) => Promise<Response>,
   config: MiddlewareConfig = {}
 ) {
   try {
-    // Get the authorization header
     const authHeader = req.headers.get("authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -33,10 +30,8 @@ export async function withAuth(
       );
     }
 
-    // Extract the token
     const token = authHeader.split(" ")[1];
 
-    // Verify the token
     const payload = await verifyJwt(token);
 
     if (!payload) {
@@ -48,7 +43,6 @@ export async function withAuth(
 
     const customPayload = payload as CustomJWTPayload;
 
-    // Check role if required
     if (config.requiredRole && customPayload.role !== config.requiredRole) {
       return new Response(
         JSON.stringify({ success: false, message: "Insufficient permissions" }),
@@ -56,7 +50,6 @@ export async function withAuth(
       );
     }
 
-    // Call the handler with the authenticated user's ID and role
     return handler(req, customPayload.userId, customPayload.role);
   } catch (error) {
     console.error("Auth middleware error:", error);
@@ -67,7 +60,6 @@ export async function withAuth(
   }
 }
 
-// Helper function to handle errors consistently in API routes
 export function handleApiError(error: ApiError) {
   console.error("API error:", error);
 
@@ -80,7 +72,6 @@ export function handleApiError(error: ApiError) {
   });
 }
 
-// Middleware for NextJS app router navigation
 export async function authMiddleware(request: NextRequest) {
   const publicPaths = [
     "/",
@@ -92,7 +83,6 @@ export async function authMiddleware(request: NextRequest) {
     "/blog",
     "/explore",
     "/tags",
-    // Add other public paths here
   ];
 
   const adminPaths = [
@@ -109,31 +99,25 @@ export async function authMiddleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // Handle public blog posts, tag pages, etc.
   if (path.startsWith("/blog/") || path.startsWith("/tags/")) {
     return NextResponse.next();
   }
 
-  // Allow access to public paths
   if (publicPaths.some((p) => path === p || path.startsWith(p + "/"))) {
     return NextResponse.next();
   }
 
-  // Check authentication for protected routes
   const token = request.cookies.get("authToken")?.value;
 
   if (!token) {
     const redirectUrl = new URL("/login", request.url);
-    // Add a redirect_to parameter to redirect back after login
     redirectUrl.searchParams.set("redirect_to", path);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Verify the token
   const payload = await verifyJwt(token);
 
   if (!payload) {
-    // Clear the invalid token
     const response = NextResponse.redirect(new URL("/login", request.url));
     response.cookies.delete("authToken");
     return response;
@@ -141,7 +125,6 @@ export async function authMiddleware(request: NextRequest) {
 
   const customPayload = payload as CustomJWTPayload;
 
-  // Check admin routes
   if (
     adminPaths.some((p) => path === p || path.startsWith(p + "/")) &&
     customPayload.role !== "ADMIN"

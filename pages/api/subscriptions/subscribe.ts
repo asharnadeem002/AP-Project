@@ -3,10 +3,6 @@ import { z } from "zod";
 import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
 import type { JWTPayload } from "../../../app/lib/jwt";
-// Import will be used in a future implementation
-// import { sendEmail } from "../../../app/lib/email";
-
-// Validation schema
 const subscriptionSchema = z.object({
   plan: z.enum(["FREE", "BASIC", "PREMIUM", "ENTERPRISE"]),
   paymentMethod: z.enum(["CASH", "STRIPE", "PAYPAL"]),
@@ -16,7 +12,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -24,17 +19,14 @@ export default async function handler(
   }
 
   try {
-    // Get the authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    // Extract the token
     const token = authHeader.split(" ")[1];
 
-    // Verify the token
     const payload = await verifyJwt(token);
 
     if (!payload || typeof payload !== "object" || !("userId" in payload)) {
@@ -43,10 +35,8 @@ export default async function handler(
 
     const typedPayload = payload as JWTPayload;
 
-    // Validate request body
     const validatedData = subscriptionSchema.parse(req.body);
 
-    // Check if user exists
     const user = await prisma.user.findUnique({
       where: {
         id: typedPayload.userId,
@@ -58,7 +48,6 @@ export default async function handler(
         .status(404)
         .json({ success: false, message: "User not found" });
     }
-    // Check if the user is active
     if (!user.isApproved) {
       return res.status(403).json({
         success: false,
@@ -67,7 +56,6 @@ export default async function handler(
       });
     }
 
-    // Check if the user already has an active or pending subscription
     const existingActiveSubscription = await prisma.subscription.findFirst({
       where: {
         userId: typedPayload.userId,
@@ -83,7 +71,6 @@ export default async function handler(
     });
 
     if (existingActiveSubscription) {
-      // If the user wants to switch to the same plan, return an error
       if (existingActiveSubscription.plan === validatedData.plan) {
         return res.status(400).json({
           success: false,
@@ -91,7 +78,6 @@ export default async function handler(
         });
       }
 
-      // For demo purposes, we'll just cancel the old subscription before creating a new one
       await prisma.subscription.update({
         where: {
           id: existingActiveSubscription.id,
@@ -111,24 +97,21 @@ export default async function handler(
       });
     }
 
-    // Calculate subscription period (for demo purposes, 1 month)
     const now = new Date();
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 1);
 
-    // Create new subscription with PENDING status (except for FREE plan)
     const newSubscription = await prisma.subscription.create({
       data: {
         userId: typedPayload.userId,
         plan: validatedData.plan,
-        status: validatedData.plan === "FREE" ? "ACTIVE" : "PENDING", // FREE plan is auto-approved
+        status: validatedData.plan === "FREE" ? "ACTIVE" : "PENDING",
         paymentMethod: validatedData.paymentMethod,
-        startDate: validatedData.plan === "FREE" ? now : null, // Only set start date for FREE plan
-        endDate: validatedData.plan === "FREE" ? null : null, // End date will be set when approved
+        startDate: validatedData.plan === "FREE" ? now : null,
+        endDate: validatedData.plan === "FREE" ? null : null,
       },
     });
 
-    // If free plan, no need for approval
     if (validatedData.plan === "FREE") {
       return res.status(201).json({
         success: true,
@@ -137,7 +120,6 @@ export default async function handler(
       });
     }
 
-    // Notify admins about the new subscription request
     const admins = await prisma.user.findMany({
       where: {
         role: "ADMIN",
@@ -147,11 +129,8 @@ export default async function handler(
       },
     });
 
-    // If there are admins, notify them about the new subscription request
     if (admins.length > 0) {
       for (const admin of admins) {
-        // Send notification email to admin (in a real app, you might want to implement this differently)
-        // This is a placeholder for the admin notification
         console.log(
           `Notifying admin ${admin.email} about new subscription request from ${user.email}`
         );

@@ -20,7 +20,6 @@ import { useAuth } from "../app/lib/AuthContext";
 import { LoadingPage } from "../app/components/shared/Loader";
 import { GetStaticProps } from "next";
 
-// Validation schema
 const verificationSchema = z.object({
   code: z
     .string()
@@ -30,11 +29,9 @@ const verificationSchema = z.object({
 
 type VerificationFormValues = z.infer<typeof verificationSchema>;
 
-// This function gets called at build time
 export const getStaticProps: GetStaticProps = async () => {
   return {
-    props: {}, // will be passed to the page component as props
-    // Enable ISR - page will be regenerated when requested (at most once every 60 seconds)
+    props: {},
     revalidate: 60,
   };
 };
@@ -57,12 +54,10 @@ export default function VerifyEmailPage() {
   });
 
   useEffect(() => {
-    // If code is provided in the URL query params, pre-fill it
     if (router.query.code) {
       setValue("code", String(router.query.code));
     }
 
-    // Check if email is available
     if (router.isReady) {
       setInitialLoading(false);
       if (!email) {
@@ -121,7 +116,6 @@ export default function VerifyEmailPage() {
     }
   };
 
-  // Show loading state if the page is not yet ready or router isn't ready
   if (initialLoading || !router.isReady) {
     return <LoadingPage message="Preparing verification..." />;
   }

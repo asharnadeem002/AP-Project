@@ -4,7 +4,6 @@ import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
 import { sendEmail } from "../../../app/lib/email";
 
-// Validation schema
 const reactivateUserSchema = z.object({
   userId: z.string().uuid("Invalid user ID format"),
 });
@@ -13,7 +12,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -21,7 +19,6 @@ export default async function handler(
   }
 
   try {
-    // Verify admin authentication
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -35,17 +32,14 @@ export default async function handler(
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
-    // Verify admin role
     if (payload.role !== "ADMIN") {
       return res
         .status(403)
         .json({ success: false, message: "Insufficient permissions" });
     }
 
-    // Validate request body
     const validatedData = reactivateUserSchema.parse(req.body);
 
-    // Find the user
     const user = await prisma.user.findUnique({
       where: {
         id: validatedData.userId,
@@ -58,14 +52,12 @@ export default async function handler(
         .json({ success: false, message: "User not found" });
     }
 
-    // If user is already active
     if (user.isActive === true) {
       return res
         .status(400)
         .json({ success: false, message: "User is already active" });
     }
 
-    // Update user to active status
     await prisma.user.update({
       where: {
         id: user.id,
@@ -75,7 +67,6 @@ export default async function handler(
       },
     });
 
-    // Send reactivation email to the user
     try {
       const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
       const loginUrl = `${baseUrl}/login`;
@@ -86,7 +77,6 @@ export default async function handler(
       });
     } catch (emailError) {
       console.error("Error sending reactivation email:", emailError);
-      // Continue the process even if the email fails
     }
 
     return res.status(200).json({

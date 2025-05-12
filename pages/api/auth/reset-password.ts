@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import prisma from "../../../app/lib/db";
 
-// Validation schema
 const resetPasswordSchema = z
   .object({
     token: z.string().min(6).max(6),
@@ -28,7 +27,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -36,10 +34,8 @@ export default async function handler(
   }
 
   try {
-    // Validate request body
     const validatedData = resetPasswordSchema.parse(req.body);
 
-    // Find the token
     const token = await prisma.token.findFirst({
       where: {
         token: validatedData.token,
@@ -60,10 +56,8 @@ export default async function handler(
       });
     }
 
-    // Hash the new password
     const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
-    // Update the user's password
     await prisma.user.update({
       where: {
         id: token.userId,
@@ -73,7 +67,6 @@ export default async function handler(
       },
     });
 
-    // Delete the used token
     await prisma.token.delete({
       where: {
         id: token.id,

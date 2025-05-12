@@ -7,7 +7,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow GET requests
   if (req.method !== "GET") {
     return res
       .status(405)
@@ -15,26 +14,22 @@ export default async function handler(
   }
 
   try {
-    // Get the authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    // Extract the token
     const token = authHeader.split(" ")[1];
 
-    // Verify the token
     const payload = await verifyJwt(token);
 
-    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
     const typedPayload = payload as JWTPayload;
 
-    // Get the user's active subscription
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: typedPayload.userId,

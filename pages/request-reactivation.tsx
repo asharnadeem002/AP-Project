@@ -8,7 +8,6 @@ import { Button } from "../app/components/shared/Button";
 import { Input } from "../app/components/shared/Input";
 import { Header } from "../app/components/shared/Header";
 
-// Validation schema
 const reactivationSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });

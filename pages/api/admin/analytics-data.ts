@@ -6,7 +6,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow GET requests
   if (req.method !== "GET") {
     return res
       .status(405)
@@ -14,7 +13,6 @@ export default async function handler(
   }
 
   try {
-    // Verify admin authentication
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -28,48 +26,40 @@ export default async function handler(
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
-    // Verify admin role
     if (payload.role !== "ADMIN") {
       return res
         .status(403)
         .json({ success: false, message: "Insufficient permissions" });
     }
 
-    // Get total users count
     const totalUsers = await prisma.user.count();
 
-    // Get active users count
     const activeUsers = await prisma.user.count({
       where: {
         isActive: true,
       },
     });
 
-    // Get pending users count
     const pendingUsers = await prisma.user.count({
       where: {
         isApproved: false,
       },
     });
 
-    // Get total subscriptions count
     const totalSubscriptions = await prisma.subscription.count();
 
-    // Get active subscriptions count
     const activeSubscriptions = await prisma.subscription.count({
       where: {
         status: "ACTIVE",
       },
     });
 
-    // Get pending subscriptions count
     const pendingSubscriptions = await prisma.subscription.count({
       where: {
         status: "PENDING",
       },
     });
 
-    // Get revenue by plan
     const revenueByPlan = await prisma.subscription.groupBy({
       by: ["plan"],
       _count: {
@@ -80,15 +70,11 @@ export default async function handler(
       },
     });
 
-    // Format revenue by plan data
     const formattedRevenueByPlan = revenueByPlan.map((item) => ({
       plan: item.plan,
       count: item._count.id,
     }));
 
-    // Get user registration data by month
-    // For a real app, we would query the database for this data
-    // For demo purposes, we're generating random data
     const months = [
       "January",
       "February",
@@ -111,11 +97,10 @@ export default async function handler(
       const monthIndex = (currentMonth - i + 12) % 12;
       userRegistrationTrend.push({
         month: months[monthIndex],
-        count: Math.floor(Math.random() * 20) + 5, // Random data for demo
+        count: Math.floor(Math.random() * 20) + 5,
       });
     }
 
-    // Additional analytics data
     const userRoles = await prisma.user.groupBy({
       by: ["role"],
       _count: {
@@ -128,7 +113,6 @@ export default async function handler(
       count: item._count.id,
     }));
 
-    // Return analytics data
     return res.status(200).json({
       success: true,
       analyticsData: {

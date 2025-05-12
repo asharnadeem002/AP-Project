@@ -14,7 +14,6 @@ import { GetServerSideProps } from "next";
 import { verifyJwt } from "../../../app/lib/jwt";
 import prisma from "../../../app/lib/db";
 
-// Define types for our server-side props
 interface UserDashboardProps {
   initialData: {
     galleryItems: number;
@@ -29,10 +28,6 @@ interface UserDashboardProps {
   }>;
 }
 
-/**
- * Server-Side Rendering (SSR)
- * This function runs on every request to prepare data for the user dashboard
- */
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const token = context.req.cookies.authToken;
 
@@ -47,21 +42,19 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   try {
     const payload = await verifyJwt(token);
-    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
       return {
         redirect: {
-          destination: '/login',
+          destination: "/login",
           permanent: false,
         },
       };
     }
 
-    // Get user from database
     const user = await prisma.user.findUnique({
       where: { id: payload.userId as string },
     });
 
-    // If user is admin, redirect to admin dashboard
     if (user && user.role === "ADMIN") {
       return {
         redirect: {
@@ -71,7 +64,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       };
     }
 
-    // If user not found or not a regular user
     if (!user || user.role !== "USER") {
       return {
         redirect: {
@@ -81,12 +73,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       };
     }
 
-    // Get user's gallery items
     const galleryItemsCount = await prisma.galleryItem.count({
       where: { userId: user.id },
     });
 
-    // Get user's favorites
     const favoriteItemsCount = await prisma.galleryItem.count({
       where: {
         userId: user.id,
@@ -94,7 +84,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       },
     });
 
-    // Get user's subscription
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: user.id,
@@ -102,7 +91,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       },
     });
 
-    // Get user's recent activity
     const recentActivity = [
       {
         action: "Uploaded photo",
@@ -156,13 +144,11 @@ export default function UserDashboardPage({
   const [dashboardData, setDashboardData] = useState(initialData);
 
   useEffect(() => {
-    // Only redirect if we're sure the user is not authenticated
     if (!isLoading && !user) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [isLoading, user, router]);
 
-  // Update dashboard data when initialData changes
   useEffect(() => {
     setDashboardData(initialData);
   }, [initialData]);
@@ -171,7 +157,6 @@ export default function UserDashboardPage({
     return <LoadingPage message="Loading your dashboard..." />;
   }
 
-  // Don't render anything if we're redirecting
   if (!user) {
     return null;
   }
@@ -193,7 +178,6 @@ export default function UserDashboardPage({
               Welcome back, {user?.username}!
             </p>
           </div>
-          {/* User Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
@@ -237,7 +221,6 @@ export default function UserDashboardPage({
               </CardContent>
             </Card>
           </div>
-          {/* Recent Activity */}
           <div className="grid grid-cols-1 gap-6">
             <Card>
               <CardHeader>
@@ -263,7 +246,6 @@ export default function UserDashboardPage({
               </CardContent>
             </Card>
           </div>{" "}
-          {/* Upload Button */}
           <div className="flex justify-center">
             <button
               className="px-5 py-3 font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"

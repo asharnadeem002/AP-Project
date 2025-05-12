@@ -4,7 +4,6 @@ import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
 import { sendEmail } from "../../../app/lib/email";
 
-// Validation schema
 const approveSubscriptionSchema = z.object({
   subscriptionId: z.string().uuid("Invalid subscription ID format"),
 });
@@ -13,7 +12,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -21,7 +19,6 @@ export default async function handler(
   }
 
   try {
-    // Verify admin authentication
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -35,17 +32,14 @@ export default async function handler(
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
-    // Verify admin role
     if (payload.role !== "ADMIN") {
       return res
         .status(403)
         .json({ success: false, message: "Insufficient permissions" });
     }
 
-    // Validate request body
     const validatedData = approveSubscriptionSchema.parse(req.body);
 
-    // Find the subscription
     const subscription = await prisma.subscription.findUnique({
       where: {
         id: validatedData.subscriptionId,
@@ -73,12 +67,10 @@ export default async function handler(
       });
     }
 
-    // Calculate subscription period (for demo purposes, 1 month from now)
     const now = new Date();
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 1);
 
-    // Update subscription status to ACTIVE
     const updatedSubscription = await prisma.subscription.update({
       where: {
         id: subscription.id,
@@ -90,7 +82,6 @@ export default async function handler(
       },
     });
 
-    // Send approval notification email to the user
     try {
       const planDisplay =
         subscription.plan.charAt(0) + subscription.plan.slice(1).toLowerCase();
@@ -109,7 +100,6 @@ export default async function handler(
       });
     } catch (emailError) {
       console.error("Error sending approval email:", emailError);
-      // Continue the process even if the email fails
     }
 
     return res.status(200).json({

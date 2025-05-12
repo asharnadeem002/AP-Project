@@ -16,7 +16,6 @@ import { toast } from "react-toastify";
 import axios, { AxiosError } from "axios";
 import { LoadingPage, Loader } from "../app/components/shared/Loader";
 
-// Types
 type SubscriptionPlan = {
   id: string;
   name: "FREE" | "BASIC" | "PREMIUM" | "ENTERPRISE";
@@ -37,10 +36,8 @@ type UserSubscription = {
 };
 
 export const getStaticProps = async () => {
-  // This will be generated at build time and revalidated on demand
   return {
     props: {},
-    // Enable ISR with a revalidation period of 60 seconds
     revalidate: 60,
   };
 };
@@ -53,7 +50,6 @@ export default function SubscriptionPage() {
   const [loadingSubscription, setLoadingSubscription] = useState(false);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
 
-  // Available subscription plans
   const subscriptionPlans: SubscriptionPlan[] = [
     {
       id: "free",
@@ -125,7 +121,6 @@ export default function SubscriptionPage() {
       return;
     }
 
-    // Fetch user's current subscription
     const fetchUserSubscription = async () => {
       if (!user) return;
 
@@ -142,7 +137,6 @@ export default function SubscriptionPage() {
         }
       } catch (error) {
         console.error("Error fetching subscription:", error);
-        // If 404, user doesn't have a subscription yet, which is fine
       } finally {
         setLoadingSubscription(false);
       }
@@ -163,13 +157,11 @@ export default function SubscriptionPage() {
     try {
       setProcessingPlan(planId);
 
-      // In a real app, this would redirect to a payment processor for paid plans
-      // For this demo, we'll directly create a subscription
       const response = await axios.post(
         "/api/subscriptions/subscribe",
         {
           plan: plan.name,
-          paymentMethod: "CASH", // For demo purposes
+          paymentMethod: "CASH",
         },
         {
           headers: {
@@ -226,7 +218,6 @@ export default function SubscriptionPage() {
     }
   };
 
-  // Full page loading state
   if (isLoading) {
     return <LoadingPage message="Loading subscription information..." />;
   }

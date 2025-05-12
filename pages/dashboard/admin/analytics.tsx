@@ -54,7 +54,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       throw new Error("Invalid token");
     }
 
-    // Check if user is admin
     const user = await prisma.user.findUnique({
       where: { id: payload.userId as string },
       select: { role: true },
@@ -69,41 +68,34 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       };
     }
 
-    // Get total users count
     const totalUsers = await prisma.user.count();
 
-    // Get active users count
     const activeUsers = await prisma.user.count({
       where: {
         isActive: true,
       },
     });
 
-    // Get pending users count
     const pendingUsers = await prisma.user.count({
       where: {
         isApproved: false,
       },
     });
 
-    // Get total subscriptions count
     const totalSubscriptions = await prisma.subscription.count();
 
-    // Get active subscriptions count
     const activeSubscriptions = await prisma.subscription.count({
       where: {
         status: "ACTIVE",
       },
     });
 
-    // Get pending subscriptions count
     const pendingSubscriptions = await prisma.subscription.count({
       where: {
         status: "PENDING",
       },
     });
 
-    // Get revenue by plan
     const revenueByPlan = await prisma.subscription.groupBy({
       by: ["plan"],
       _count: {
@@ -114,14 +106,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       },
     });
 
-    // Format revenue by plan data
     const formattedRevenueByPlan = revenueByPlan.map((item) => ({
       plan: item.plan,
       count: item._count.id,
     }));
 
-    // Generate sample user registration trend data (last 6 months)
-    // In a real app, this would be calculated from database timestamps
     const months = [
       "January",
       "February",
@@ -144,7 +133,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       const monthIndex = (currentMonth - i + 12) % 12;
       userRegistrationTrend.push({
         month: months[monthIndex],
-        count: Math.floor(Math.random() * 20) + 5, // Random data for demo
+        count: Math.floor(Math.random() * 20) + 5,
       });
     }
 
@@ -180,7 +169,6 @@ export default function AnalyticsPage({ analyticsData }: AnalyticsPageProps) {
   const router = useRouter();
 
   useEffect(() => {
-    // Client-side auth check as a backup
     if (!isLoading && !user) {
       router.push("/login");
       return;
@@ -214,7 +202,6 @@ export default function AnalyticsPage({ analyticsData }: AnalyticsPageProps) {
             </p>
           </div>
 
-          {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
@@ -272,7 +259,6 @@ export default function AnalyticsPage({ analyticsData }: AnalyticsPageProps) {
             </Card>
           </div>
 
-          {/* Charts and Detailed Analytics */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -349,7 +335,6 @@ export default function AnalyticsPage({ analyticsData }: AnalyticsPageProps) {
             </Card>
           </div>
 
-          {/* Platform Activity */}
           <Card>
             <CardHeader>
               <CardTitle>Platform Overview</CardTitle>

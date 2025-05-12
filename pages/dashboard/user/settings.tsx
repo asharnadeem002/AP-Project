@@ -54,7 +54,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
     const typedPayload = payload as JWTPayload;
 
-    // Use a raw query to get all user data
     const user = await prisma.user.findUnique({
       where: { id: typedPayload.userId },
       select: {
@@ -116,17 +115,15 @@ export default function UserSettingsPage({ userData }: SettingsPageProps) {
     userData.notifications
   );
 
-  // Add a timeout to prevent infinite loading
   React.useEffect(() => {
     if (isLoading) {
       const timer = setTimeout(() => {
         console.error("Loading timeout reached");
-      }, 5000); // 5 seconds timeout
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [isLoading]);
 
-  // If we have userData but still loading, show the content anyway
   if (isLoading && !userData) {
     return <LoadingPage message="Loading settings..." />;
   }

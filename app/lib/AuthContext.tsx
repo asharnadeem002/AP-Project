@@ -88,22 +88,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const token = localStorage.getItem("authToken");
 
-        if (!token) {
-          setIsLoading(false);
-          return;
-        }
-
-        const response = await axios.get("/api/auth/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.data.user) {
-          setUser(response.data.user);
-        }
+      if (!token) {
+        setIsLoading(false);
+        return;
       }
-     catch (error: unknown) {
+
+      const response = await axios.get("/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.user) {
+        setUser(response.data.user);
+      }
+    } catch (error: unknown) {
       localStorage.removeItem("authToken");
       console.error("Auth check error:", error);
     } finally {
@@ -111,10 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Single useEffect for initial auth check
   useEffect(() => {
     checkAuth();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {

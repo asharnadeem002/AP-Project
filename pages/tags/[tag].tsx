@@ -7,7 +7,6 @@ import { Header } from "../../app/components/shared/Header";
 import { useRouter } from "next/router";
 import { LoadingPage } from "../../app/components/shared/Loader";
 
-// Sample data types
 interface Photo {
   id: string;
   title: string;
@@ -20,36 +19,22 @@ interface TagPageProps {
   photos: Photo[];
 }
 
-/**
- * This demonstrates getStaticPaths with fallback: true for ISR
- * Only pre-renders some paths at build time and generates the rest on-demand
- */
 export const getStaticPaths: GetStaticPaths = async () => {
-  // In a real app, you would fetch the most popular tags from your API/DB
   const popularTags = ["nature", "city", "people"];
 
-  // Generate paths for popular tags
   const paths = popularTags.map((tag) => ({
     params: { tag },
   }));
 
   return {
     paths,
-    // fallback: true enables ISR - Next.js will generate new pages on-demand
-    // and cache them for future requests
     fallback: true,
   };
 };
 
-/**
- * getStaticProps for tag pages
- * Pre-renders at build time for paths from getStaticPaths
- * Renders on-demand for new paths when fallback: true
- */
 export const getStaticProps: GetStaticProps<TagPageProps> = async ({
   params,
 }) => {
-  // Safety check - this shouldn't happen with fallback: true
   if (!params?.tag) {
     return {
       notFound: true,
@@ -59,13 +44,8 @@ export const getStaticProps: GetStaticProps<TagPageProps> = async ({
   const tag = params.tag as string;
 
   try {
-    // In a real app, you'd fetch tag data from an API/database
-    // For demo purposes, we'll generate mock data
-
-    // Simulate API call with a 1 second delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Generate some mock photos based on the tag
     const photos: Photo[] = Array.from({ length: 9 }, (_, i) => ({
       id: `photo-${i + 1}`,
       title: `${tag.charAt(0).toUpperCase() + tag.slice(1)} Photo ${i + 1}`,
@@ -77,37 +57,25 @@ export const getStaticProps: GetStaticProps<TagPageProps> = async ({
       ],
     }));
 
-    // Check if the tag exists in our "database"
-    // In this example, we'll allow any tag, but you could implement logic here
-    // to return notFound: true for invalid tags
-
     return {
       props: {
         tag,
         photos,
       },
-      // Revalidate every 10 minutes
       revalidate: 60 * 10,
     };
   } catch (error) {
     console.error(`Error fetching data for tag ${tag}:`, error);
 
-    // Return not found for errors
     return {
       notFound: true,
     };
   }
 };
 
-/**
- * The Tag page component
- * Shows photos with a specific tag
- * Demonstrates ISR with fallback
- */
 export default function TagPage({ tag, photos }: TagPageProps) {
   const router = useRouter();
 
-  // If the page is still generating, show a loading state
   if (router.isFallback) {
     return <LoadingPage message={`Loading ${router.query.tag} photos...`} />;
   }

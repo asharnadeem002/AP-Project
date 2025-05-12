@@ -2,7 +2,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import prisma from "../../../app/lib/db";
 
-// Validation schema
 const requestReactivationSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
@@ -11,7 +10,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -19,10 +17,8 @@ export default async function handler(
   }
 
   try {
-    // Validate request body
     const validatedData = requestReactivationSchema.parse(req.body);
 
-    // Find the user
     const user = await prisma.user.findUnique({
       where: {
         email: validatedData.email,
@@ -30,7 +26,6 @@ export default async function handler(
     });
 
     if (!user) {
-      // For security, don't reveal whether the email exists
       return res.status(200).json({
         success: true,
         message:
@@ -38,10 +33,8 @@ export default async function handler(
       });
     }
 
-    // Check if the user account is active
-    const isAccountActive = user.isActive ?? true; // Default to true if field doesn't exist
+    const isAccountActive = user.isActive ?? true;
 
-    // If the user is already active
     if (isAccountActive) {
       return res.status(200).json({
         success: true,
@@ -49,10 +42,8 @@ export default async function handler(
       });
     }
 
-    // Check if reactivation was already requested
     const reactivationAlreadyRequested = user.reactivationRequested ?? false;
 
-    // If they already requested reactivation
     if (reactivationAlreadyRequested) {
       return res.status(200).json({
         success: true,
@@ -60,7 +51,6 @@ export default async function handler(
       });
     }
 
-    // Log the reactivation request, even if we can't update the database
     console.log(`Reactivation requested for user: ${user.email}`);
 
     return res.status(200).json({

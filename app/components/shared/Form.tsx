@@ -18,7 +18,6 @@ interface FormProps<T extends FieldValues> {
   resetOnSubmit?: boolean;
 }
 
-// Create a form component that provides access to form context
 export function Form<T extends FieldValues>({
   children,
   onSubmit,
@@ -52,12 +51,10 @@ export function Form<T extends FieldValues>({
   );
 }
 
-// Helper component to access form context in child components
 export function useFormContext<T extends FieldValues>() {
   return useForm<T>();
 }
 
-// Export a basic form field component
 interface FormFieldProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
@@ -70,7 +67,6 @@ export function FormField({ children, className, ...props }: FormFieldProps) {
   );
 }
 
-// Export form error message component
 interface FormErrorProps {
   message?: string;
 }
@@ -81,7 +77,6 @@ export function FormError({ message }: FormErrorProps) {
   return <p className="text-red-500 text-sm mt-1">{message}</p>;
 }
 
-// Export form submit button wrapping component
 interface FormSubmitProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }

@@ -4,18 +4,12 @@ import { AuthLayout } from "../app/components/auth/AuthLayout";
 import { ForgotPasswordForm } from "../app/components/auth/ForgotPasswordForm";
 import { GetStaticProps } from "next";
 
-/**
- * Static Site Generation (SSG) with Incremental Static Regeneration (ISR)
- * This strategy is ideal for auth pages that don't need user-specific data
- * but should be available quickly to users.
- */
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       pageTitle: "Forgot Password | SnapTrace",
       pageDescription: "Reset your SnapTrace account password",
     },
-    // Enable ISR with a revalidation period
     revalidate: 60,
   };
 };

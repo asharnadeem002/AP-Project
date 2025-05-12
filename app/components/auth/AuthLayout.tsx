@@ -43,7 +43,6 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         </Link>
       </div>
 
-      {/* Toast notifications */}
       <ToastContainer
         position="top-right"
         autoClose={5000}

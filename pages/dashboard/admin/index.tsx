@@ -14,7 +14,6 @@ import { GetServerSideProps } from "next";
 import { verifyJwt } from "../../../app/lib/jwt";
 import prisma from "../../../app/lib/db";
 
-// Define types for our server-side props
 interface AdminDashboardProps {
   initialStats: {
     totalUsers: number;
@@ -35,14 +34,6 @@ interface AdminDashboardProps {
   }>;
 }
 
-/**
- * Server-Side Rendering (SSR)
- * This function runs on every request, allowing us to:
- * 1. Check authentication on the server
- * 2. Fetch real-time data from the database
- * 3. Redirect if not authorized
- * 4. Pre-render the page with the latest data
- */
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const token = context.req.cookies.authToken;
 
@@ -58,16 +49,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   try {
     const payload = await verifyJwt(token);
 
-    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
       throw new Error("Invalid token");
     }
 
-    // Get user from database
     const user = await prisma.user.findUnique({
       where: { id: payload.userId as string },
     });
 
-    // Check if user is admin
     if (!user || user.role !== "ADMIN") {
       return {
         redirect: {
@@ -77,7 +66,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       };
     }
 
-    // Get dashboard stats from database
     const totalUsers = await prisma.user.count();
     const pendingApprovals = await prisma.user.count({
       where: { isApproved: false },
@@ -108,7 +96,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       return total + price;
     }, 0);
 
-    // Get recent users
     const recentUsersData = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       take: 3,
@@ -125,7 +112,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       status: user.isApproved ? "Approved" : "Pending",
     }));
 
-    // Get recent subscriptions
     const recentSubscriptionsData = await prisma.subscription.findMany({
       orderBy: { createdAt: "desc" },
       take: 3,
@@ -192,7 +178,6 @@ export default function AdminDashboardPage({
   const router = useRouter();
   const [stats, setStats] = useState(initialStats);
   useEffect(() => {
-    // Client-side auth check as a backup
     if (!isLoading && !user) {
       window.location.href = "/login";
       return;
@@ -203,7 +188,6 @@ export default function AdminDashboardPage({
       return;
     }
 
-    // Update stats from props
     setStats(initialStats);
   }, [user, isLoading, router, initialStats]);
 

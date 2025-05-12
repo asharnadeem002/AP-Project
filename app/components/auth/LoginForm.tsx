@@ -18,7 +18,6 @@ import {
 import { useAuth } from "../../lib/AuthContext";
 import { toast } from "react-toastify";
 
-// Validation schemas
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
@@ -42,7 +41,6 @@ export function LoginForm() {
   const { login, verifyLogin } = useAuth();
   const router = useRouter();
 
-  // Get redirect URL from query params
   const getRedirectPath = () => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get("redirect_to") || "/dashboard";
@@ -92,7 +90,6 @@ export function LoginForm() {
       if (result.success) {
         toast.success("Login successful");
 
-        // Ensure token is stored in localStorage
         if (result.token) {
           localStorage.setItem("authToken", result.token);
           console.log("Stored token:", localStorage.getItem("authToken"));
@@ -100,7 +97,6 @@ export function LoginForm() {
           throw new Error("Token not returned from server");
         }
 
-        // Handle role-based redirects using router.push for client-side navigation
         if (result.user?.role === "ADMIN") {
           router.push("/dashboard/admin");
         } else if (result.user?.role === "USER") {

@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { GetServerSideProps } from 'next';
-import { DashboardLayout } from '../../../../../app/components/dashboard/DashboardLayout';
-import { Card, CardContent } from '../../../../../app/components/shared/Card';
-import Image from 'next/image';
-import { verifyJwt } from '../../../../../app/lib/jwt';
-import prisma from '../../../../../app/lib/db';
-import { toast } from 'react-toastify';
+import React, { useState } from "react";
+import { GetServerSideProps } from "next";
+import { DashboardLayout } from "../../../../../app/components/dashboard/DashboardLayout";
+import { Card, CardContent } from "../../../../../app/components/shared/Card";
+import Image from "next/image";
+import { verifyJwt } from "../../../../../app/lib/jwt";
+import prisma from "../../../../../app/lib/db";
+import { toast } from "react-toastify";
 
-type MediaType = 'IMAGE' | 'VIDEO';
+type MediaType = "IMAGE" | "VIDEO";
 
 interface GalleryItem {
   id: string;
@@ -24,7 +24,10 @@ interface FavoritesPageProps {
   totalItems: number;
 }
 
-export default function FavoritesPage({ initialItems, totalItems }: FavoritesPageProps) {
+export default function FavoritesPage({
+  initialItems,
+  totalItems,
+}: FavoritesPageProps) {
   const [items, setItems] = useState<GalleryItem[]>(initialItems);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -32,58 +35,59 @@ export default function FavoritesPage({ initialItems, totalItems }: FavoritesPag
 
   const handleDelete = async (id: string) => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem("authToken");
       const response = await fetch(`/api/gallery/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) throw new Error('Delete failed');
+      if (!response.ok) throw new Error("Delete failed");
 
-      setItems(prev => prev.filter(item => item.id !== id));
-      toast.success('Media deleted successfully!');
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      toast.success("Media deleted successfully!");
     } catch (error) {
-      toast.error('Failed to delete media');
-      console.error('Delete error:', error);
+      toast.error("Failed to delete media");
+      console.error("Delete error:", error);
     }
   };
 
   const handleUnfavorite = async (id: string) => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem("authToken");
       const response = await fetch(`/api/gallery/${id}/favorite`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ isFavorite: false }),
       });
 
-      if (!response.ok) throw new Error('Update failed');
+      if (!response.ok) throw new Error("Update failed");
 
-      // Remove the item from the favorites list
-      setItems(prev => prev.filter(item => item.id !== id));
-      toast.success('Removed from favorites');
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      toast.success("Removed from favorites");
     } catch (error) {
-      toast.error('Failed to update favorite status');
-      console.error('Favorite update error:', error);
+      toast.error("Failed to update favorite status");
+      console.error("Favorite update error:", error);
     }
   };
 
   const handlePageChange = async (page: number) => {
     try {
-      const response = await fetch(`/api/gallery/favorites?page=${page}&limit=${itemsPerPage}`);
-      if (!response.ok) throw new Error('Failed to fetch items');
-      
+      const response = await fetch(
+        `/api/gallery/favorites?page=${page}&limit=${itemsPerPage}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch items");
+
       const data = await response.json();
       setItems(data.items);
       setCurrentPage(page);
     } catch (error) {
-      toast.error('Failed to load more items');
-      console.error('Pagination error:', error);
+      toast.error("Failed to load more items");
+      console.error("Pagination error:", error);
     }
   };
 
@@ -91,13 +95,18 @@ export default function FavoritesPage({ initialItems, totalItems }: FavoritesPag
     <DashboardLayout>
       <div className="space-y-6 p-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Favorite Media</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Favorite Media
+          </h1>
         </div>
 
         {items.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-gray-500">No favorite items found. Add some items to your favorites from the gallery.</p>
+              <p className="text-gray-500">
+                No favorite items found. Add some items to your favorites from
+                the gallery.
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -106,7 +115,7 @@ export default function FavoritesPage({ initialItems, totalItems }: FavoritesPag
               {items.map((item) => (
                 <Card key={item.id}>
                   <CardContent className="p-4">
-                    {item.mediaType === 'IMAGE' ? (
+                    {item.mediaType === "IMAGE" ? (
                       <Image
                         src={item.fileUrl}
                         alt={item.title}
@@ -123,7 +132,9 @@ export default function FavoritesPage({ initialItems, totalItems }: FavoritesPag
                     )}
                     <div className="mt-4">
                       <h3 className="font-semibold">{item.title}</h3>
-                      <p className="text-sm text-gray-500">{item.description}</p>
+                      <p className="text-sm text-gray-500">
+                        {item.description}
+                      </p>
                       <div className="mt-2 flex justify-between items-center">
                         <button
                           onClick={() => handleUnfavorite(item.id)}
@@ -178,7 +189,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (!token) {
     return {
       redirect: {
-        destination: '/login',
+        destination: "/login",
         permanent: false,
       },
     };
@@ -186,10 +197,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   try {
     const payload = await verifyJwt(token);
-    if (!payload || typeof payload !== 'object' || !('userId' in payload)) {
+    if (!payload || typeof payload !== "object" || !("userId" in payload)) {
       return {
         redirect: {
-          destination: '/login',
+          destination: "/login",
           permanent: false,
         },
       };
@@ -214,7 +225,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     if (!user || user.role !== "USER") {
       return {
         redirect: {
-          destination: '/login',
+          destination: "/login",
           permanent: false,
         },
       };
@@ -225,18 +236,18 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
     const [items, totalItems] = await Promise.all([
       prisma.galleryItem.findMany({
-        where: { 
+        where: {
           userId: user.id,
-          isFavorite: true 
+          isFavorite: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         take: itemsPerPage,
         skip: (page - 1) * itemsPerPage,
       }),
       prisma.galleryItem.count({
-        where: { 
+        where: {
           userId: user.id,
-          isFavorite: true 
+          isFavorite: true,
         },
       }),
     ]);
@@ -248,14 +259,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       },
     };
   } catch (error) {
-    console.error('Favorites page error:', error);
+    console.error("Favorites page error:", error);
     return {
       redirect: {
-        destination: '/login',
+        destination: "/login",
         permanent: false,
       },
     };
   } finally {
     await prisma.$disconnect();
   }
-}; 
+};

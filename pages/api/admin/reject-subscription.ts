@@ -4,7 +4,6 @@ import prisma from "../../../app/lib/db";
 import { verifyJwt } from "../../../app/lib/jwt";
 import { sendEmail } from "../../../app/lib/email";
 
-// Validation schema
 const rejectSubscriptionSchema = z.object({
   subscriptionId: z.string().uuid("Invalid subscription ID format"),
   rejectionReason: z.string().optional(),
@@ -14,7 +13,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -22,7 +20,6 @@ export default async function handler(
   }
 
   try {
-    // Verify admin authentication
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -36,17 +33,14 @@ export default async function handler(
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
-    // Verify admin role
     if (payload.role !== "ADMIN") {
       return res
         .status(403)
         .json({ success: false, message: "Insufficient permissions" });
     }
 
-    // Validate request body
     const validatedData = rejectSubscriptionSchema.parse(req.body);
 
-    // Find the subscription
     const subscription = await prisma.subscription.findUnique({
       where: {
         id: validatedData.subscriptionId,
@@ -74,23 +68,17 @@ export default async function handler(
       });
     }
 
-    // Store the rejection reason in a variable
     const rejectionReason = validatedData.rejectionReason;
 
-    // Update subscription status to CANCELED
     const updatedSubscription = await prisma.subscription.update({
       where: {
         id: subscription.id,
       },
       data: {
         status: "CANCELED",
-        // Store rejection reason as a JSON field or in another way
-        // that works with your database schema
       },
     });
 
-    // Even if we can't store the reason in the database directly,
-    // we can still include it in the email notification
     try {
       const planDisplay =
         subscription.plan.charAt(0) + subscription.plan.slice(1).toLowerCase();
@@ -107,7 +95,6 @@ export default async function handler(
       });
     } catch (emailError) {
       console.error("Error sending rejection email:", emailError);
-      // Continue the process even if the email fails
     }
 
     return res.status(200).json({

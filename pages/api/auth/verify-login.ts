@@ -3,7 +3,6 @@ import { z } from "zod";
 import prisma from "../../../app/lib/db";
 import { signJwt } from "../../../app/lib/jwt";
 
-// Validation schema
 const verifyLoginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   token: z.string().min(6).max(6),
@@ -13,7 +12,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -21,10 +19,8 @@ export default async function handler(
   }
 
   try {
-    // Validate request body
     const validatedData = verifyLoginSchema.parse(req.body);
 
-    // Find the user
     const user = await prisma.user.findUnique({
       where: {
         email: validatedData.email,
@@ -38,7 +34,6 @@ export default async function handler(
       });
     }
 
-    // Validate token
     const validToken = await prisma.token.findFirst({
       where: {
         token: validatedData.token,
@@ -63,7 +58,6 @@ export default async function handler(
       });
     }
 
-    // Check if user is active - we need to check if the user has isActive field
     if (
       Object.prototype.hasOwnProperty.call(user, "isActive") &&
       user.isActive === false
@@ -75,15 +69,12 @@ export default async function handler(
       });
     }
 
-    // Delete the token as it's now used
     await prisma.token.delete({
       where: {
         id: validToken.id,
       },
     });
 
-    // Generate JWT token - Include isActive in the payload
-    // If the field doesn't exist in the DB yet, default to true
     const isActive = Object.prototype.hasOwnProperty.call(user, "isActive")
       ? user.isActive
       : true;
@@ -93,7 +84,6 @@ export default async function handler(
       isActive: isActive,
     });
 
-    // Return user data (excluding sensitive fields)
     const userData = {
       id: user.id,
       email: user.email,
@@ -104,17 +94,16 @@ export default async function handler(
       role: user.role,
       isVerified: user.isVerified,
       isApproved: user.isApproved,
-      isActive: isActive, // Include in the response
+      isActive: isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
 
-    // Set the token in an HTTP-only cookie that's accessible by the middleware
     res.setHeader(
       "Set-Cookie",
       `authToken=${jwtToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${
         60 * 60 * 24 * 7
-      }` // 1 week
+      }`
     );
 
     return res.status(200).json({

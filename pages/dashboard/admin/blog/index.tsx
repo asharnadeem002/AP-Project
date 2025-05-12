@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import Head from 'next/head';
-import { DashboardLayout } from '../../../../app/components/dashboard/DashboardLayout';
-import { useRouter } from 'next/router';
-import { Button } from '../../../../app/components/shared/Button';
-import useSWR from 'swr';
-import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
+import React, { useState } from "react";
+import Head from "next/head";
+import { DashboardLayout } from "../../../../app/components/dashboard/DashboardLayout";
+import { useRouter } from "next/router";
+import { Button } from "../../../../app/components/shared/Button";
+import useSWR from "swr";
+import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 interface BlogPost {
   id: string;
@@ -17,33 +17,35 @@ interface BlogPost {
   updatedAt: string;
 }
 
-// Fetch function for SWR with error handling
 const fetcher = async (url: string) => {
   const response = await fetch(url, {
-    credentials: 'include',
+    credentials: "include",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
-  
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to fetch blog posts');
+    throw new Error(errorData.error || "Failed to fetch blog posts");
   }
-  
+
   const data = await response.json();
   if (!Array.isArray(data)) {
-    throw new Error('Invalid data format received from server');
+    throw new Error("Invalid data format received from server");
   }
   return data;
 };
 
 export default function AdminBlogPage() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Use CSR with SWR for real-time updates
-  const { data: posts, error, mutate } = useSWR<BlogPost[]>('/api/admin/blog', fetcher, {
+  const {
+    data: posts,
+    error,
+    mutate,
+  } = useSWR<BlogPost[]>("/api/admin/blog", fetcher, {
     onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
       if (retryCount >= 3) return;
       setTimeout(() => revalidate({ retryCount }), 5000);
@@ -51,7 +53,7 @@ export default function AdminBlogPage() {
   });
 
   const handleCreatePost = () => {
-    router.push('/dashboard/admin/blog/create');
+    router.push("/dashboard/admin/blog/create");
   };
 
   const handleEditPost = (slug: string) => {
@@ -59,40 +61,40 @@ export default function AdminBlogPage() {
   };
 
   const handleDeletePost = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
+    if (!confirm("Are you sure you want to delete this post?")) return;
 
     try {
       const response = await fetch(`/api/admin/blog/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
+        method: "DELETE",
+        credentials: "include",
       });
       if (!response.ok) {
-        throw new Error('Failed to delete post');
+        throw new Error("Failed to delete post");
       }
       mutate();
     } catch (error) {
-      console.error('Error deleting post:', error);
-      alert('Failed to delete post. Please try again.');
+      console.error("Error deleting post:", error);
+      alert("Failed to delete post. Please try again.");
     }
   };
 
   const handleTogglePublish = async (id: string, currentStatus: boolean) => {
     try {
       const response = await fetch(`/api/admin/blog/${id}`, {
-        method: 'PATCH',
-        credentials: 'include',
+        method: "PATCH",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ published: !currentStatus }),
       });
       if (!response.ok) {
-        throw new Error('Failed to update post status');
+        throw new Error("Failed to update post status");
       }
       mutate();
     } catch (error) {
-      console.error('Error toggling post status:', error);
-      alert('Failed to update post status. Please try again.');
+      console.error("Error toggling post status:", error);
+      alert("Failed to update post status. Please try again.");
     }
   };
 
@@ -103,13 +105,22 @@ export default function AdminBlogPage() {
           <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-8">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
                 <p className="text-sm text-red-700">
-                  {error.message || 'Error loading blog posts. Please try again later.'}
+                  {error.message ||
+                    "Error loading blog posts. Please try again later."}
                 </p>
               </div>
             </div>
@@ -134,13 +145,15 @@ export default function AdminBlogPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="sm:flex sm:items-center sm:justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Blog Management</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Blog Management
+              </h1>
               <p className="mt-2 text-sm text-gray-700">
                 Create, edit, and manage your blog posts
               </p>
             </div>
             <div className="mt-4 sm:mt-0">
-              <Button 
+              <Button
                 onClick={handleCreatePost}
                 className="inline-flex items-center"
               >
@@ -160,8 +173,18 @@ export default function AdminBlogPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
             </div>
@@ -176,12 +199,24 @@ export default function AdminBlogPage() {
             ) : filteredPosts.length === 0 ? (
               <div className="p-8 text-center">
                 <div className="mx-auto h-12 w-12 text-gray-400">
-                  <svg className="h-full w-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  <svg
+                    className="h-full w-full"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                    />
                   </svg>
                 </div>
                 <p className="mt-4 text-gray-600">
-                  {searchQuery ? 'No matching posts found.' : 'No blog posts yet. Create your first post!'}
+                  {searchQuery
+                    ? "No matching posts found."
+                    : "No blog posts yet. Create your first post!"}
                 </p>
                 {!searchQuery && (
                   <Button onClick={handleCreatePost} className="mt-4">
@@ -223,31 +258,36 @@ export default function AdminBlogPage() {
                           <span
                             className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                               post.published
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-yellow-100 text-yellow-800'
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
                             }`}
                           >
-                            {post.published ? 'Published' : 'Draft'}
+                            {post.published ? "Published" : "Draft"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(post.updatedAt).toLocaleDateString(undefined, {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
+                          {new Date(post.updatedAt).toLocaleDateString(
+                            undefined,
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex justify-end space-x-3">
                             <button
-                              onClick={() => handleTogglePublish(post.id, post.published)}
+                              onClick={() =>
+                                handleTogglePublish(post.id, post.published)
+                              }
                               className={`px-3 py-1 rounded-md text-sm font-medium ${
                                 post.published
-                                  ? 'text-yellow-700 bg-yellow-100 hover:bg-yellow-200'
-                                  : 'text-green-700 bg-green-100 hover:bg-green-200'
+                                  ? "text-yellow-700 bg-yellow-100 hover:bg-yellow-200"
+                                  : "text-green-700 bg-green-100 hover:bg-green-200"
                               }`}
                             >
-                              {post.published ? 'Unpublish' : 'Publish'}
+                              {post.published ? "Unpublish" : "Publish"}
                             </button>
                             <button
                               onClick={() => handleEditPost(post.slug)}
@@ -276,4 +316,4 @@ export default function AdminBlogPage() {
       </DashboardLayout>
     </>
   );
-} 
+}

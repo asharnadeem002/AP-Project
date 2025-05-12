@@ -4,7 +4,6 @@ import { z } from "zod";
 import prisma from "../../../app/lib/db";
 import { sendEmail, generateVerificationToken } from "../../../app/lib/email";
 
-// Validation schema
 const signupSchema = z.object({
   username: z
     .string()
@@ -35,7 +34,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Only allow POST requests
   if (req.method !== "POST") {
     return res
       .status(405)
@@ -43,10 +41,8 @@ export default async function handler(
   }
 
   try {
-    // Validate request body
     const validatedData = signupSchema.parse(req.body);
 
-    // Check if a user with the same email or username already exists
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
@@ -68,15 +64,12 @@ export default async function handler(
       }
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
-    // Generate verification token (6-digit number)
     const verificationToken = generateVerificationToken();
     const tokenExpiry = new Date();
-    tokenExpiry.setHours(tokenExpiry.getHours() + 24); // Token valid for 24 hours
+    tokenExpiry.setHours(tokenExpiry.getHours() + 24);
 
-    // Create the user
     const user = await prisma.user.create({
       data: {
         username: validatedData.username,
@@ -90,7 +83,6 @@ export default async function handler(
       },
     });
 
-    // Create verification token
     await prisma.token.create({
       data: {
         token: verificationToken,
@@ -100,7 +92,6 @@ export default async function handler(
       },
     });
 
-    // Send verification email
     await sendEmail(validatedData.email, "verification", {
       token: verificationToken,
     });

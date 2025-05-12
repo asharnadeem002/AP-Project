@@ -3,8 +3,8 @@ import { SignJWT, jwtVerify } from "jose";
 export interface JWTPayload {
   userId: string;
   role: "USER" | "ADMIN";
-  isActive?: boolean; // Add isActive field, making it optional for backward compatibility
-  [key: string]: unknown; // Allow additional properties but with unknown type
+  isActive?: boolean;
+  [key: string]: unknown;
 }
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);

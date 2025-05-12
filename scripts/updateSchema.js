@@ -1,7 +1,3 @@
-/**
- * This script safely adds the isActive field to existing users
- * and ensures existing admins are marked as active
- */
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
@@ -9,14 +5,10 @@ async function main() {
   console.log("Starting schema update...");
 
   try {
-    // Get a count of all users
     const userCount = await prisma.user.count();
     console.log(`Found ${userCount} users in database.`);
 
-    // First, check if the User table has the isActive field
-    // If not present in schema, this query will fail and we can handle accordingly
     try {
-      // Add isActive field to all users and set it to true by default
       const updatedUsers = await prisma.$executeRaw`
         UPDATE User 
         SET isActive = true 
@@ -35,7 +27,6 @@ async function main() {
       );
     }
 
-    // Add initial values for reactivationRequested field
     try {
       const updatedUsersReactivation = await prisma.$executeRaw`
         UPDATE User 
@@ -52,7 +43,6 @@ async function main() {
       );
     }
 
-    // Make sure all admin users are active
     try {
       await prisma.$executeRaw`
         UPDATE User 
