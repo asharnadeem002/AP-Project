@@ -30,6 +30,7 @@ interface BlogIndexPageProps {
 export const getStaticProps: GetStaticProps<BlogIndexPageProps> = async () => {
   try {
     // Make direct database query instead of API call during static generation
+    // because we are using getStaticProps and not getServerSideProps and Api call dont work because of 
     const posts = await prisma.blogPost.findMany({
       where: { published: true },
       orderBy: { createdAt: 'desc' },
