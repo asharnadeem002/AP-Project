@@ -4,10 +4,29 @@ import { z } from "zod";
 import prisma from "../../../app/lib/db";
 import { sendEmail, generateVerificationToken } from "../../../app/lib/email";
 
-const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-});
+const loginSchema = z
+  .object({
+    email: z.string().email("Please enter a valid email address"),
+    password: z
+      .string()
+      .min(1, "Password is required")
+      .optional()
+      .or(z.literal(undefined)),
+    resend: z.boolean().optional(),
+  })
+  .refine(
+    (data) => {
+      // If this is not a resend request, then password must be provided
+      if (!data.resend) {
+        return !!data.password;
+      }
+      return true;
+    },
+    {
+      message: "Password is required for login",
+      path: ["password"],
+    }
+  );
 
 export default async function handler(
   req: NextApiRequest,
@@ -49,16 +68,19 @@ export default async function handler(
       });
     }
 
-    const passwordValid = await bcrypt.compare(
-      validatedData.password,
-      user.password
-    );
+    // Skip password validation if this is a resend request
+    if (!validatedData.resend) {
+      const passwordValid = await bcrypt.compare(
+        validatedData.password as string,
+        user.password
+      );
 
-    if (!passwordValid) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials",
-      });
+      if (!passwordValid) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid credentials",
+        });
+      }
     }
 
     const loginToken = generateVerificationToken();
