@@ -14,13 +14,16 @@ export default async function handler(
   }
 
   try {
-    const authHeader = req.headers.authorization;
+    // Get token from cookie or Authorization header
+    const token =
+      req.cookies.authToken ||
+      (req.headers.authorization?.startsWith("Bearer ")
+        ? req.headers.authorization.split(" ")[1]
+        : null);
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!token) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
-
-    const token = authHeader.split(" ")[1];
 
     const payload = await verifyJwt(token);
 

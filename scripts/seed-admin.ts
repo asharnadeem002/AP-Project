@@ -10,7 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const ADMIN_USERS = [
   {
-    email: "l217748@lhr.nu.edu.pk",
+    email: "l215336@lhr.nu.edu.pk",
     username: "admin",
     password: "Admin@123",
     phoneNumber: "+1234567890",

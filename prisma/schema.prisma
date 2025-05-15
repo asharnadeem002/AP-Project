@@ -74,6 +74,7 @@ model User {
   subscriptions     Subscription[]
   galleryItems      GalleryItem[]
   blogPosts         BlogPost[]     // Add relation to blog posts
+  faceRecognitionResults FaceRecognitionResult[] // Add relation to face recognition results
 }
 
 // Token model for verification, password reset, and login
@@ -119,6 +120,10 @@ model GalleryItem {
   isFavorite  Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  
+  // Add relations for face recognition
+  referenceForResults FaceRecognitionResult[] @relation("ReferenceImage")
+  videoForResults     FaceRecognitionResult[] @relation("Video")
 
   @@index([userId])
 }
@@ -137,4 +142,26 @@ model BlogPost {
   author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([authorId])
+}
+
+// Face Recognition Result model
+model FaceRecognitionResult {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referenceImageId String
+  referenceImage   GalleryItem @relation("ReferenceImage", fields: [referenceImageId], references: [id], onDelete: Cascade)
+  videoId          String
+  video            GalleryItem @relation("Video", fields: [videoId], references: [id], onDelete: Cascade)
+  matches          Json?     // Store match details as JSON (timestamps, confidence scores)
+  matchCount       Int       // Number of face matches found
+  status           String    // "completed", "processing", "failed"
+  error            String?   // Error message if processing failed
+  processedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([referenceImageId])
+  @@index([videoId])
 }

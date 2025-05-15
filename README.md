@@ -127,5 +127,137 @@ Or:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## Face Recognition Feature
+
+SnapTrace now includes an AI-powered face recognition feature that allows users to find faces in videos.
+
+### Setup Instructions
+
+1. Ensure you have Python 3.8+ installed on your system
+2. Run the setup script to create a Python virtual environment:
+   ```
+   npm run setup:python
+   OR
+   python python/face_api.py
+   ```
+3. Generate Prisma client with the new models:
+   ```
+   npm run prisma:generate
+   ```
+4. Place the YOLO model file at `public/best.pt`
+5. Start the application:
+   ```
+   npm run dev
+   ```
+
+### How It Works
+
+1. Upload reference images and videos to your gallery
+2. Go to the Face Recognition page from the user dashboard sidebar
+3. Select a reference image containing the face(s) you want to find
+4. Select a video to search in
+5. Start the face recognition process
+6. View the results showing when and where the faces were found in the video
+
+### Technologies Used
+
+- Next.js for the frontend and API routes
+- Prisma for database operations
+- Python with YOLO and FaceNet for face detection and recognition
+- TensorFlow and OpenCV for image processing
+
+# Next.js Face Recognition System
+
+This project integrates a Python-based face recognition system with a Next.js application. It uses YOLO and FaceNet for face detection and matching.
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18 or later)
+- [Docker](https://www.docker.com/get-started/) and Docker Compose
+
+## Setup Instructions
+
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Start the Python API service**:
+   ```bash
+   npm run python:start
+   ```
+   This command builds and starts a Docker container with the Python face recognition API.
+
+3. **Run the Next.js development server**:
+   ```bash
+   npm run dev
+   ```
+   
+   Alternatively, start both the Python API and Next.js with a single command:
+   ```bash
+   npm run dev:with-python
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Face Recognition Feature
+
+The face recognition system allows you to:
+
+1. Upload a reference image (containing faces)
+2. Upload a video to scan for those faces
+3. View results showing any matches found in the video
+
+### How It Works
+
+The system uses:
+- **YOLO**: For face detection in images and videos
+- **FaceNet**: For extracting face embeddings to compare faces
+- **FastAPI**: Python backend for processing videos and images
+- **Next.js**: Frontend and API routes to communicate with the Python backend
+
+## Development
+
+### Project Structure
+
+- `python/`: Contains the Python API code and Dockerfile
+  - `face_api.py`: FastAPI implementation for face recognition
+  - `requirements.txt`: Python dependencies
+  - `Dockerfile`: Docker configuration for the Python service
+
+- `pages/api/python/`: Next.js API routes for communicating with the Python service
+  - `face-recognition.ts`: API handler for face recognition requests
+
+- `pages/dashboard/user/face-recognition/`: Frontend components
+  - `streamlit-ui.tsx`: React component for the face recognition UI
+
+- `docker-compose.yml`: Docker Compose configuration
+
+### Stopping the Python API
+
+When you're done, stop the Python API service:
+
+```bash
+npm run python:stop
+```
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. Check that Docker is running and the container is up:
+   ```bash
+   docker-compose ps
+   ```
+
+2. Check the container logs:
+   ```bash
+   docker-compose logs face-api
+   ```
+
+3. Make sure the YOLO model is present in the public directory (`public/best.pt`)
+
+4. Ensure the Next.js API can communicate with the Python API (http://localhost:8000)
+
 ```
 ```

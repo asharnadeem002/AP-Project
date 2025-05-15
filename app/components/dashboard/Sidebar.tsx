@@ -14,6 +14,7 @@ import {
   ChevronRightIcon,
   ChartBarIcon,
   PencilSquareIcon,
+  FaceSmileIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../lib/AuthContext";
 
@@ -57,6 +58,20 @@ export function Sidebar() {
             href: "/dashboard/user/gallery/favorites",
             icon: (props: React.ComponentProps<"svg">) => (
               <StarIcon {...props} />
+            ),
+          },
+          {
+            name: "Face Recognition",
+            href: "/dashboard/user/face-recognition",
+            icon: (props: React.ComponentProps<"svg">) => (
+              <FaceSmileIcon {...props} />
+            ),
+          },
+          {
+            name: "Streamlit Style UI",
+            href: "/dashboard/user/face-recognition/streamlit-ui",
+            icon: (props: React.ComponentProps<"svg">) => (
+              <FaceSmileIcon {...props} />
             ),
           },
         ]
