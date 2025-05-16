@@ -83,6 +83,17 @@ export default async function handler(
       },
     });
 
+    await prisma.subscription.create({
+      data: {
+        userId: user.id,
+        plan: "FREE",
+        status: "ACTIVE",
+        paymentMethod: "CASH",
+        startDate: new Date(),
+        endDate: null,
+      },
+    });
+
     await prisma.token.create({
       data: {
         token: verificationToken,

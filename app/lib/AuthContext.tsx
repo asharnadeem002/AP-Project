@@ -19,6 +19,14 @@ export type User = {
   role: "USER" | "ADMIN";
   createdAt: Date;
   updatedAt: Date;
+  subscription?: {
+    id: string;
+    plan: "FREE" | "BASIC" | "PREMIUM" | "ENTERPRISE";
+    status: "PENDING" | "ACTIVE" | "CANCELED" | "EXPIRED";
+    startDate: string | null;
+    endDate: string | null;
+    paymentMethod: "CASH" | "STRIPE" | "PAYPAL";
+  };
 };
 
 interface SignupData {
@@ -100,7 +108,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (response.data.user) {
-        setUser(response.data.user);
+        // Fetch subscription data if user exists
+        try {
+          const subscriptionResponse = await axios.get(
+            "/api/subscriptions/current",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (subscriptionResponse.data.success) {
+            // Add subscription data to user object
+            setUser({
+              ...response.data.user,
+              subscription: subscriptionResponse.data.subscription,
+            });
+          } else {
+            setUser(response.data.user);
+          }
+        } catch (error) {
+          // If subscription fetch fails, still set the user
+          setUser(response.data.user);
+          console.error("Subscription fetch error:", error);
+        }
       }
     } catch (error: unknown) {
       localStorage.removeItem("authToken");

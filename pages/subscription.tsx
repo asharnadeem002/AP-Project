@@ -121,6 +121,11 @@ export default function SubscriptionPage() {
       return;
     }
 
+    if (!isLoading && user?.role === "ADMIN") {
+      setLoadingSubscription(false);
+      return;
+    }
+
     const fetchUserSubscription = async () => {
       if (!user) return;
 
@@ -134,6 +139,8 @@ export default function SubscriptionPage() {
 
         if (response.data.success) {
           setUserSubscription(response.data.subscription);
+          // If admin or user has no subscription but response was successful,
+          // we still need to set loadingSubscription to false
         }
       } catch (error) {
         console.error("Error fetching subscription:", error);
@@ -239,7 +246,9 @@ export default function SubscriptionPage() {
               Subscription Plans
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-2">
-              Choose a plan that works best for your needs
+              {user?.role === "ADMIN"
+                ? "Admin accounts don't require subscriptions. This page is for viewing available plans only."
+                : "Choose a plan that works best for your needs"}
             </p>
           </div>
 
@@ -299,18 +308,29 @@ export default function SubscriptionPage() {
                 </div>
               </div>
 
-              {userSubscription.status === "ACTIVE" && (
-                <div className="mt-4">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={cancelSubscription}
-                    isLoading={processingPlan === "cancel"}
-                  >
-                    Cancel Subscription
-                  </Button>
-                </div>
-              )}
+              {userSubscription.status === "ACTIVE" &&
+                userSubscription.plan !== "FREE" && (
+                  <div className="mt-4">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={cancelSubscription}
+                      isLoading={processingPlan === "cancel"}
+                    >
+                      Cancel Subscription
+                    </Button>
+                  </div>
+                )}
+            </div>
+          ) : user?.role === "ADMIN" ? (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-8">
+              <h2 className="text-xl font-semibold text-blue-800 dark:text-blue-300 mb-3">
+                Admin Account
+              </h2>
+              <p className="text-gray-700 dark:text-gray-300">
+                As an administrator, you don&apos;t need a subscription to use
+                all features. This page is for informational purposes only.
+              </p>
             </div>
           ) : null}
 
@@ -351,14 +371,17 @@ export default function SubscriptionPage() {
                         : "default"
                     }
                     disabled={
-                      userSubscription?.plan === plan.name &&
-                      userSubscription.status === "ACTIVE"
+                      (userSubscription?.plan === plan.name &&
+                        userSubscription.status === "ACTIVE") ||
+                      user?.role === "ADMIN"
                     }
                     onClick={() => subscribeToPlan(plan.id)}
                     isLoading={processingPlan === plan.id}
                   >
-                    {userSubscription?.plan === plan.name &&
-                    userSubscription.status === "ACTIVE"
+                    {user?.role === "ADMIN"
+                      ? "Admin View"
+                      : userSubscription?.plan === plan.name &&
+                        userSubscription.status === "ACTIVE"
                       ? "Current Plan"
                       : userSubscription?.plan === plan.name &&
                         userSubscription.status === "CANCELED"

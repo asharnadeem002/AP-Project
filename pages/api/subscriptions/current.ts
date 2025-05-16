@@ -30,6 +30,21 @@ export default async function handler(
 
     const typedPayload = payload as JWTPayload;
 
+    // First check if the user is an admin
+    const user = await prisma.user.findUnique({
+      where: { id: typedPayload.userId },
+      select: { role: true },
+    });
+
+    // If admin, return success with null subscription
+    if (user?.role === "ADMIN") {
+      return res.status(200).json({
+        success: true,
+        subscription: null,
+        isAdmin: true,
+      });
+    }
+
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: typedPayload.userId,
@@ -41,8 +56,10 @@ export default async function handler(
     });
 
     if (!subscription) {
-      return res.status(404).json({
-        success: false,
+      // Instead of returning a 404 error, return success with null subscription
+      return res.status(200).json({
+        success: true,
+        subscription: null,
         message: "No active subscription found",
       });
     }

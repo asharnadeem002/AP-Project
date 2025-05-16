@@ -48,6 +48,15 @@ export default async function handler(
         .status(404)
         .json({ success: false, message: "User not found" });
     }
+
+    // Prevent admin users from subscribing
+    if (user.role === "ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin accounts don't require subscriptions",
+      });
+    }
+
     if (!user.isApproved) {
       return res.status(403).json({
         success: false,

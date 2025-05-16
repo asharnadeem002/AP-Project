@@ -14,6 +14,9 @@ import {
   ChevronRightIcon,
   ChartBarIcon,
   PencilSquareIcon,
+  UserCircleIcon,
+  VideoCameraIcon,
+  ShoppingBagIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../lib/AuthContext";
 
@@ -29,6 +32,9 @@ export function Sidebar() {
   const { user } = useAuth();
 
   const isAdmin = user?.role === "ADMIN";
+  const hasActiveSubscription =
+    user?.subscription?.status === "ACTIVE" &&
+    user?.subscription?.plan !== "FREE";
 
   const userNavItems: SidebarItem[] = [
     {
@@ -59,6 +65,38 @@ export function Sidebar() {
               <StarIcon {...props} />
             ),
           },
+          ...(hasActiveSubscription
+            ? [
+                {
+                  name: "Face Recognizer",
+                  href: "http://localhost:8501/",
+                  icon: (props: React.ComponentProps<"svg">) => (
+                    <UserCircleIcon {...props} />
+                  ),
+                },
+                {
+                  name: "Face Recognizer (Real-time)",
+                  href: "https://b508-34-16-156-173.ngrok-free.app/",
+                  icon: (props: React.ComponentProps<"svg">) => (
+                    <VideoCameraIcon {...props} />
+                  ),
+                },
+                {
+                  name: "Clothing Recognizer",
+                  href: "https://4c51-34-125-217-121.ngrok-free.app/",
+                  icon: (props: React.ComponentProps<"svg">) => (
+                    <ShoppingBagIcon {...props} />
+                  ),
+                },
+                {
+                  name: "Clothing Recognizer (Real-time)",
+                  href: "https://e535-34-16-212-227.ngrok-free.app/",
+                  icon: (props: React.ComponentProps<"svg">) => (
+                    <VideoCameraIcon {...props} />
+                  ),
+                },
+              ]
+            : []),
         ]
       : []),
     {
